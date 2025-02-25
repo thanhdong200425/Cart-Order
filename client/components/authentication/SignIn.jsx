@@ -2,6 +2,7 @@ import { useState } from "react";
 import SubmitButton from "../buttons/SubmitButton";
 import ThirdPartyButton from "../buttons/ThirdPartyButton";
 import TextField from "./TextField";
+import PasswordField from "./PasswordField";
 
 const SignIn = () => {
     const [emailInputValue, setEmailInputValue] = useState("");
@@ -15,8 +16,8 @@ const SignIn = () => {
                 <p className="text-gray-500 mt-2">We are glad to see you back with us</p>
 
                 <div className="mt-6 w-full max-w-md">
-                    <TextField type="email" placeholder="Email" iconPath={"/icons/user-icon.svg"} />
-                    <TextField type="password" placeholder="Password" iconPath={"/icons/lock-icon.svg"} isPassword={true} />
+                    <TextField type="email" placeholder="Email" iconPath={"/icons/user-icon.svg"} name={"email"} inputValue={emailInputValue} setInputValue={setEmailInputValue} />
+                    <PasswordField name={"password"} />
                     <SubmitButton content={"Next"} />
 
                     <div className="text-center mt-4 font-semibold">Login with Others</div>
@@ -30,7 +31,7 @@ const SignIn = () => {
             </div>
 
             {/* Right Section */}
-            <div className="w-1/2 flex items-center justify-center bg-orange-500 rounded-3xl">
+            <div className="w-1/2 flex items-center justify-center rounded-3xl">
                 <img src="/icons/introduce-image.jpg" alt="Sci-fi illustration" className="w-[100%] rounded-3xl" />
             </div>
         </div>
