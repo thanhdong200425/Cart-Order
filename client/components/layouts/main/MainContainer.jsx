@@ -1,5 +1,13 @@
+import NavigationBar from "../../main/NavigationBar";
+import ProductList from "../../main/ProductList";
+
 const MainContainer = () => {
-    return <h1>Main page</h1>;
+    return (
+        <div className="min-h-screen bg-gray-50">
+            <NavigationBar />
+            <ProductList />
+        </div>
+    );
 };
 
 export default MainContainer;

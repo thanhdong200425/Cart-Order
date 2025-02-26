@@ -7,6 +7,7 @@ import { validateOrigin, validateRequest } from "./helpers/checkRequest.js";
 import { createUser } from "./repository/UserRepository.js";
 import { hashPassword, verifyPassword } from "./helpers/handlePassword.js";
 import User from "./models/User.js";
+import Product from "./models/Product.js";
 
 dotenv.config();
 
@@ -22,10 +23,6 @@ app.use((req, res, next) => {
     console.log(req.headers.origin);
     if (req.headers.origin && validateOrigin(req)) return next();
     return res.status(400).json({ error: "Your domain is not allowed" });
-});
-
-app.get("/", (req, res) => {
-    res.send("Server is running");
 });
 
 app.post("/sign-in", async (req, res) => {
@@ -82,6 +79,26 @@ app.post("/check-email", async (req, res) => {
     } catch (error) {
         console.log("Error in check-email route: " + error);
         return res.status(500).json({ error: error.message });
+    }
+});
+
+app.get("/", async (req, res) => {
+    try {
+        let page = parseInt(req.query.page) || 1,
+            limit = parseInt(req.query.limit) || 20,
+            skipList = (page - 1) * limit,
+            productList = await Product.find().skip(skipList).limit(limit),
+            totalProductsInDB = await Product.countDocuments();
+
+        return res.status(200).json({
+            productList,
+            currentPage: page,
+            totalPages: Math.ceil(totalProductsInDB / limit),
+            totalProductsInDB,
+        });
+    } catch (error) {
+        console.log("Error in / route: " + error);
+        return res.status(500).json({ error: "Failed to fetch products!" });
     }
 });
 
