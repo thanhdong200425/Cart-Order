@@ -56,7 +56,7 @@ const SignUpPage = () => {
 
     return (
         <div className="flex max-h-screen bg-white text-white p-[5rem] rounded-lg">
-            <LeftContainer title={"Sign Up"} subTitle={"Create your account and start shopping today"}>
+            <LeftContainer title={"Sign Up"} subTitle={"Create your account and start shopping today"} alternativeMode={"sign-in"}>
                 <TextField type="email" placeholder="Email" iconPath={"/icons/user-icon.svg"} name={"email"} inputValue={emailInputValue} setInputValue={setEmailInputValue} onFocus={handleFocusInEmail} onBlur={handleBlurInEmail} />
                 <PasswordField name={"password"} inputValue={passwordInputValue} setInputValue={setPasswordInputValue} />
                 <PasswordField name={"confirm-password"} inputValue={confirmPasswordInputValue} setInputValue={setConfirmPasswordValue} placeholder={"Confirm Password"} />

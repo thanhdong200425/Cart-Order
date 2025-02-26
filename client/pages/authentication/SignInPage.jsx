@@ -26,7 +26,7 @@ const SignInPage = () => {
 
     return (
         <div className="flex max-h-screen bg-white text-white p-[5rem] rounded-lg">
-            <LeftContainer title={"Welcome"} subTitle={"We are glad to see you back with us"}>
+            <LeftContainer title={"Welcome"} subTitle={"We are glad to see you back with us"} alternativeMode={"sign-up"}>
                 <TextField type="email" placeholder="Email" iconPath={"/icons/user-icon.svg"} name={"email"} inputValue={emailInputValue} setInputValue={setEmailInputValue} />
                 <PasswordField name={"password"} inputValue={passwordInputValue} setInputValue={setPasswordInputValue} />
                 <SubmitButton content={"Next"} onClick={handleSignIn} />
