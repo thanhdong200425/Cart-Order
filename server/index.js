@@ -75,7 +75,7 @@ app.post("/check-email", async (req, res) => {
         if (!email) return res.status(400).json({ error: "Email is required" });
         const existingUser = await User.findOne({ email });
         if (existingUser)
-            return res.status(400).json({
+            return res.status(404).json({
                 error: "Email already was used",
             });
         return res.status(200).json({ message: "OK" });
