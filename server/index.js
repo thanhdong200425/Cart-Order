@@ -35,9 +35,9 @@ app.post("/sign-in", async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ error: "User not found!" });
+        if (!user) return res.status(404).json({ error: "User not found!" });
         const isMatch = await verifyPassword(email, password);
-        if (!isMatch) return res.status(400).json({ error: "Password isn't correct" });
+        if (!isMatch) return res.status(404).json({ error: "Password isn't correct" });
 
         return res.status(200).json({ user });
     } catch (error) {
