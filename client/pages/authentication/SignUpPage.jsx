@@ -62,7 +62,7 @@ const SignUpPage = () => {
                 <PasswordField name={"confirm-password"} inputValue={confirmPasswordInputValue} setInputValue={setConfirmPasswordValue} placeholder={"Confirm Password"} />
                 <SubmitButton content={"Create account"} onClick={handleSignUp} />
             </LeftContainer>
-            <RightContainer imgPath={"/icons/introduce-image.jpg"} />
+            <RightContainer imgPath={"/icons/signup-image.jpg"} />
             <ToastContainer />
         </div>
     );
