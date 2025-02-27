@@ -1,11 +1,10 @@
 import NavigationBar from "../../main/NavigationBar";
-import ProductList from "../../main/ProductList";
 
-const MainContainer = () => {
+const MainContainer = ({ children }) => {
     return (
         <div className="min-h-screen bg-gray-50">
             <NavigationBar />
-            <ProductList />
+            {children}
         </div>
     );
 };

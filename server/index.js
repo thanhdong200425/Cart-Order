@@ -102,6 +102,16 @@ app.get("/", async (req, res) => {
     }
 });
 
+app.get("/get-category", async (req, res) => {
+    try {
+        const categoryList = await Product.distinct("category");
+        return res.status(200).json({ categoryList });
+    } catch (error) {
+        console.log("Error in get-category route: " + error);
+        return res.status(500).json({ error: error.message });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
