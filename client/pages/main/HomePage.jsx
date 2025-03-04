@@ -10,6 +10,7 @@ import SelectedFilters from "../../components/main/SelectedFilters";
 const HomePage = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [totalProducts, setTotalProducts] = useState(0);
     const [filters, setFilter] = useState(filtersList);
     const [filterState, setFilterState] = useState(
         filtersList.reduce((acc, filter) => {
@@ -50,6 +51,7 @@ const HomePage = () => {
                 const response = await axios.get(SERVER_URL + "/");
                 setProducts(response.data.productList);
                 setLoading(false);
+                setTotalProducts(response.data.totalProducts);
             } catch (error) {
                 console.log("Error in fetchProducts: " + error);
                 if (error.response.status === 500) toast.error("Sorry, we encountered a problem!");
@@ -89,6 +91,17 @@ const HomePage = () => {
                     <FilterList filters={filters} filterStates={filterState} onToggleFilter={toggleFilter} selectedOptions={selectedOptions} onSelectOption={handleSelectOption} />
                 </div>
                 <div className="flex-grow">
+                    <div className="container mt-4 pt-4 px-4 mx-auto flex justify-between items-center flex-wrap gap-2">
+                        <p>Found {totalProducts} results</p>
+                        <div className="flex items-center space-x-2">
+                            <span className="text-gray-700 font-medium">Sort by</span>
+                            <select className="p-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                <option defaultChecked>Most popular</option>
+                                <option>From low to high</option>
+                                <option>From high to low</option>
+                            </select>
+                        </div>
+                    </div>
                     <SelectedFilters selectedOptions={selectedOptions} onRemoveFilter={handleSelectOption} setSelectedOptions={setSelectedOptions} />
                     <ProductList products={products} loading={loading} />
                 </div>

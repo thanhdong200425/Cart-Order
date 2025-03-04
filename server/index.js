@@ -86,14 +86,33 @@ app.get("/", async (req, res) => {
     try {
         let page = parseInt(req.query.page) || 1,
             limit = parseInt(req.query.limit) || 20,
-            skipList = (page - 1) * limit,
-            productList = await Product.find().skip(skipList).limit(limit),
-            totalProductsInDB = await Product.countDocuments();
+            skipList = (page - 1) * limit;
+
+        const filterQuery = {};
+
+        if (req.query.category && req.query.category !== "all") filterQuery.category = req.query.category;
+
+        // Only initialize the price whenever price exists
+        if (req.query.price && req.query.price !== "all") {
+            const priceRanges = {
+                "below $200": { price: { $lt: 200 } },
+                "from $200 to $400": { price: { $gte: 200, $lte: 400 } },
+                "from $400 to $800": { price: { $gte: 400, $lte: 800 } },
+                "from $800 to $2000": { price: { $gte: 800, $lte: 2000 } },
+                "above $2000": { price: { $gt: 2000 } },
+            };
+            if (priceRanges[req.query.price]) Object.assign(filterQuery, priceRanges[req.query.price]);
+        }
+
+        const productList = await Product.find(filterQuery).skip(skipList).limit(limit);
+        const totalProducts = await Product.countDocuments();
+
         return res.status(200).json({
             productList,
             currentPage: page,
-            totalPages: Math.ceil(totalProductsInDB / limit),
-            totalProductsInDB,
+            totalPages: Math.ceil(totalProducts / limit),
+            totalProducts,
+            isHasMore: page < Math.ceil(totalProducts / limit),
         });
     } catch (error) {
         console.log("Error in / route: " + error);
