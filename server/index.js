@@ -89,7 +89,6 @@ app.get("/", async (req, res) => {
             skipList = (page - 1) * limit,
             productList = await Product.find().skip(skipList).limit(limit),
             totalProductsInDB = await Product.countDocuments();
-
         return res.status(200).json({
             productList,
             currentPage: page,

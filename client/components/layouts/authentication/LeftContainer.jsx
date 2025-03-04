@@ -27,7 +27,7 @@ const LeftContainer = ({ title, subTitle, children, alternativeMode }) => {
                 {/* Toggle Link */}
                 <div className="text-center">
                     <a href={`/${alternativeMode}`} className="inline-block text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200 underline-offset-2 hover:underline">
-                        {alternativeMode === "sign-in" ? "Create an account" : "Already have an account? Sign in"}
+                        {alternativeMode === "sign-up" ? "Create an account" : "Already have an account? Sign in"}
                     </a>
                 </div>
             </div>
