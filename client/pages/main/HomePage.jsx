@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import MainContainer from "../../components/layouts/main/MainContainer";
 import ProductList from "../../components/main/ProductList";
 import axios from "axios";
@@ -8,9 +8,15 @@ import FilterList from "../../components/main/FilterList";
 import SelectedFilters from "../../components/main/SelectedFilters";
 
 const HomePage = () => {
+    const scrollPositionRef = useRef(0);
+    const [scrollToTopVisible, setScrollToTopVisible] = useState(false);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [totalProducts, setTotalProducts] = useState(0);
+    const [showedProducts, setShowedProducts] = useState(0);
+    const [page, setPage] = useState(1);
+    const [limit] = useState(20);
+    const [hasMore, setHasMore] = useState(true);
     const [filters, setFilter] = useState(filtersList);
     const [filterState, setFilterState] = useState(
         filtersList.reduce((acc, filter) => {
@@ -30,6 +36,17 @@ const HomePage = () => {
             type: ["lowest", "highest"],
         },
     ];
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrollToTopVisible(window.scrollY > 300);
+        };
+
+        window.addEventListener("scroll", handleScroll);
+
+        // Only run whenever the component is unmounted
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     useEffect(() => {
         const fetchCategory = async () => {
@@ -72,6 +89,8 @@ const HomePage = () => {
                 const queryParams = new URLSearchParams();
                 queryParams.append("sortField", sortField);
                 queryParams.append("sortOrder", sortOrder);
+                queryParams.append("page", page);
+                queryParams.append("limit", limit);
 
                 selectedOptions.forEach((option) => {
                     if (option === "all") return;
@@ -81,9 +100,12 @@ const HomePage = () => {
                 });
 
                 const response = await axios.get(`${SERVER_URL}/?${queryParams.toString()}`);
-                setProducts(response.data.productList);
+                const newProducts = page === 1 ? response.data.productList : [...products, ...response.data.productList];
+                setProducts(newProducts);
                 setLoading(false);
                 setTotalProducts(response.data.totalProducts);
+                setShowedProducts(newProducts.length);
+                setHasMore(response.data.productList.length >= limit);
             } catch (error) {
                 console.log("Error in fetchProducts: " + error);
                 if (error.response.status === 500) toast.error("Sorry, we encountered a problem!");
@@ -92,7 +114,19 @@ const HomePage = () => {
             }
         };
         fetchProducts();
-    }, [selectedSortOption, selectedOptions, filters]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedSortOption, selectedOptions, filters, page, limit]);
+
+    useEffect(() => {
+        if (page > 1 && !loading) setTimeout(() => window.scrollTo(0, scrollPositionRef.current), 0);
+    }, [page, loading]);
+
+    useEffect(() => setPage(1), [selectedOptions, selectedSortOption]);
+
+    const loadMoreProducts = () => {
+        scrollPositionRef.current = window.scrollY;
+        setPage((prev) => prev + 1);
+    };
 
     const toggleFilter = (filterName) => {
         setFilterState((prev) => ({
@@ -117,11 +151,12 @@ const HomePage = () => {
     };
 
     const handleSortChange = (e) => setSelectedSortOption(e.target.value);
+    const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
     return (
         <MainContainer>
             <div className="flex">
-                <div className="w-64 shrink-0 mr-3 py-8 pl-6">
+                <div className="w-64 shrink-0 mr-3 py-8 pl-6 sticky top-20 self-start max-h-screen overflow-y-auto">
                     <FilterList filters={filters} filterStates={filterState} onToggleFilter={toggleFilter} selectedOptions={selectedOptions} onSelectOption={handleSelectOption} />
                 </div>
                 <div className="flex-grow">
@@ -142,8 +177,30 @@ const HomePage = () => {
                     </div>
                     <SelectedFilters selectedOptions={selectedOptions} onRemoveFilter={handleSelectOption} setSelectedOptions={setSelectedOptions} />
                     <ProductList products={products} loading={loading} />
+                    {hasMore && showedProducts < totalProducts && (
+                        <div className="flex justify-center my-8">
+                            <button
+                                onClick={loadMoreProducts}
+                                disabled={loading}
+                                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 
+                                           transition duration-300 disabled:bg-blue-300"
+                            >
+                                {loading ? "Loading..." : `Load ${totalProducts - showedProducts} more products`}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
+            <button
+                onClick={scrollToTop}
+                className={`fixed right-8 bottom-8 p-3 rounded-full bg-blue-600 text-white shadow-lg
+                           hover:bg-blue-700 transition-all duration-300 z-50 hover:cursor-pointer
+                           ${scrollToTopVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"}`}
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+            </button>
         </MainContainer>
     );
 };
