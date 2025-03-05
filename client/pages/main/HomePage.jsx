@@ -7,16 +7,26 @@ import { toast } from "react-toastify";
 import FilterList from "../../components/main/FilterList";
 import SelectedFilters from "../../components/main/SelectedFilters";
 
+// Main homepage component that handles product listing with filtering and sorting
 const HomePage = () => {
+    // Ref for storing scroll position when loading more products
     const scrollPositionRef = useRef(0);
+
+    // UI state
     const [scrollToTopVisible, setScrollToTopVisible] = useState(false);
-    const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    // Product data state
+    const [products, setProducts] = useState([]);
     const [totalProducts, setTotalProducts] = useState(0);
     const [showedProducts, setShowedProducts] = useState(0);
+
+    // Pagination state
     const [page, setPage] = useState(1);
     const [limit] = useState(20);
     const [hasMore, setHasMore] = useState(true);
+
+    // Filter and sort state
     const [filters, setFilter] = useState(filtersList);
     const [filterState, setFilterState] = useState(
         filtersList.reduce((acc, filter) => {
@@ -26,6 +36,8 @@ const HomePage = () => {
     );
     const [selectedOptions, setSelectedOptions] = useState(["all"]);
     const [selectedSortOption, setSelectedSortOption] = useState("price-lowest");
+
+    // Available sorting options
     const sortList = [
         {
             name: "price",
@@ -37,6 +49,7 @@ const HomePage = () => {
         },
     ];
 
+    // Show/hide scroll-to-top button based on scroll position
     useEffect(() => {
         const handleScroll = () => {
             setScrollToTopVisible(window.scrollY > 300);
@@ -48,6 +61,7 @@ const HomePage = () => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    // Fetch categories on component mount
     useEffect(() => {
         const fetchCategory = async () => {
             try {
@@ -72,11 +86,13 @@ const HomePage = () => {
         fetchCategory();
     }, []);
 
+    // Fetch products based on filters, sorting, and pagination
     useEffect(() => {
         const fetchProducts = async () => {
             try {
                 setLoading(true);
 
+                // Parse sort option into field and order
                 let sortField = "price";
                 let sortOrder = "lowest";
 
@@ -86,12 +102,14 @@ const HomePage = () => {
                     sortOrder = order;
                 }
 
+                // Build query parameters
                 const queryParams = new URLSearchParams();
                 queryParams.append("sortField", sortField);
                 queryParams.append("sortOrder", sortOrder);
                 queryParams.append("page", page);
                 queryParams.append("limit", limit);
 
+                // Add selected filter options to query
                 selectedOptions.forEach((option) => {
                     if (option === "all") return;
 
@@ -99,8 +117,13 @@ const HomePage = () => {
                     else if (filters.find((f) => f.name === "price")?.data.includes(option)) queryParams.append("price", option);
                 });
 
+                // Fetch products with filters
                 const response = await axios.get(`${SERVER_URL}/?${queryParams.toString()}`);
+
+                // Handle pagination - replace or append products
                 const newProducts = page === 1 ? response.data.productList : [...products, ...response.data.productList];
+
+                // Update state with fetched data
                 setProducts(newProducts);
                 setLoading(false);
                 setTotalProducts(response.data.totalProducts);
@@ -117,17 +140,21 @@ const HomePage = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedSortOption, selectedOptions, filters, page, limit]);
 
+    // Restore scroll position after loading more products
     useEffect(() => {
         if (page > 1 && !loading) setTimeout(() => window.scrollTo(0, scrollPositionRef.current), 0);
     }, [page, loading]);
 
+    // Reset to first page when filters or sort options change
     useEffect(() => setPage(1), [selectedOptions, selectedSortOption]);
 
+    // Load more products and save current scroll position
     const loadMoreProducts = () => {
         scrollPositionRef.current = window.scrollY;
         setPage((prev) => prev + 1);
     };
 
+    // Toggle filter visibility
     const toggleFilter = (filterName) => {
         setFilterState((prev) => ({
             ...prev,
@@ -135,6 +162,7 @@ const HomePage = () => {
         }));
     };
 
+    // Handle filter option selection
     const handleSelectOption = (option) => {
         if (option === "all") {
             setSelectedOptions(["all"]);
@@ -150,16 +178,23 @@ const HomePage = () => {
         });
     };
 
+    // Handle sort option change
     const handleSortChange = (e) => setSelectedSortOption(e.target.value);
+
+    // Scroll to top of page with smooth animation
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
     return (
         <MainContainer>
             <div className="flex">
+                {/* Sidebar with filters */}
                 <div className="w-64 shrink-0 mr-3 py-8 pl-6 sticky top-20 self-start max-h-screen overflow-y-auto">
                     <FilterList filters={filters} filterStates={filterState} onToggleFilter={toggleFilter} selectedOptions={selectedOptions} onSelectOption={handleSelectOption} />
                 </div>
+
+                {/* Main content area */}
                 <div className="flex-grow">
+                    {/* Sort controls and result count */}
                     <div className="container mt-4 pt-4 px-4 mx-auto flex justify-between items-center flex-wrap gap-2">
                         <p>Found {totalProducts} results</p>
                         <div className="flex items-center space-x-2">
@@ -175,8 +210,14 @@ const HomePage = () => {
                             </select>
                         </div>
                     </div>
+
+                    {/* Selected filters display */}
                     <SelectedFilters selectedOptions={selectedOptions} onRemoveFilter={handleSelectOption} setSelectedOptions={setSelectedOptions} />
+
+                    {/* Product grid */}
                     <ProductList products={products} loading={loading} />
+
+                    {/* Load more button */}
                     {hasMore && showedProducts < totalProducts && (
                         <div className="flex justify-center my-8">
                             <button
@@ -191,6 +232,8 @@ const HomePage = () => {
                     )}
                 </div>
             </div>
+
+            {/* Scroll to top button */}
             <button
                 onClick={scrollToTop}
                 className={`fixed right-8 bottom-8 p-3 rounded-full bg-blue-600 text-white shadow-lg
@@ -205,6 +248,7 @@ const HomePage = () => {
     );
 };
 
+// Default filter configurations
 const filtersList = [
     {
         name: "price",
