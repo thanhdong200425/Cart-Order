@@ -69,7 +69,18 @@ const HomePage = () => {
                     sortOrder = order;
                 }
 
-                const response = await axios.get(`${SERVER_URL}/?sortField=${sortField}&sortOrder=${sortOrder}`);
+                const queryParams = new URLSearchParams();
+                queryParams.append("sortField", sortField);
+                queryParams.append("sortOrder", sortOrder);
+
+                selectedOptions.forEach((option) => {
+                    if (option === "all") return;
+
+                    if (filters.find((f) => f.name === "category")?.data.includes(option)) queryParams.append("category", option);
+                    else if (filters.find((f) => f.name === "price")?.data.includes(option)) queryParams.append("price", option);
+                });
+
+                const response = await axios.get(`${SERVER_URL}/?${queryParams.toString()}`);
                 setProducts(response.data.productList);
                 setLoading(false);
                 setTotalProducts(response.data.totalProducts);
@@ -81,7 +92,7 @@ const HomePage = () => {
             }
         };
         fetchProducts();
-    }, [selectedSortOption]);
+    }, [selectedSortOption, selectedOptions, filters]);
 
     const toggleFilter = (filterName) => {
         setFilterState((prev) => ({

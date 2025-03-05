@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug with Nodemon",
+            "runtimeExecutable": "nodemon",
+            "program": "${workspaceFolder}/server/index.js",
+            "restart": true,
+            "internalConsoleOptions": "neverOpen",
+            "env": {
+                "NODE_ENV": "development",
+                "PORT": "5000",
+                "MONGODB_URI": "mongodb+srv://dongntwork2004:dong@cart-order-app.fyjdk.mongodb.net/?retryWrites=true&w=majority&appName=Cart-Order-App"
+            }
+        }
+    ]
+}

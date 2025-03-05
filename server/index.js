@@ -106,11 +106,13 @@ app.get("/", async (req, res) => {
                 "from $800 to $2000": { price: { $gte: 800, $lte: 2000 } },
                 "above $2000": { price: { $gt: 2000 } },
             };
-            if (priceRanges[req.query.price]) Object.assign(filterQuery, priceRanges[req.query.price]);
+            const prices = Array.isArray(req.query.price) ? req.query.price : [req.query.price];
+            const priceQueries = prices.filter((price) => price !== "all" && priceRanges[price]).map((price) => priceRanges[price]);
+            if (priceQueries.length > 0) filterQuery.$or = priceQueries;
         }
 
         const productList = await Product.find(filterQuery).skip(skipList).sort(sortOption).limit(limit);
-        const totalProducts = await Product.countDocuments();
+        const totalProducts = await Product.countDocuments(filterQuery);
 
         return res.status(200).json({
             productList,
