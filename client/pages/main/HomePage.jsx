@@ -19,6 +19,17 @@ const HomePage = () => {
         }, {})
     );
     const [selectedOptions, setSelectedOptions] = useState(["all"]);
+    const [selectedSortOption, setSelectedSortOption] = useState("price-lowest");
+    const sortList = [
+        {
+            name: "price",
+            type: ["lowest", "highest"],
+        },
+        {
+            name: "name",
+            type: ["lowest", "highest"],
+        },
+    ];
 
     useEffect(() => {
         const fetchCategory = async () => {
@@ -48,7 +59,17 @@ const HomePage = () => {
         const fetchProducts = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(SERVER_URL + "/");
+
+                let sortField = "price";
+                let sortOrder = "lowest";
+
+                if (selectedSortOption) {
+                    const [field, order] = selectedSortOption.split("-");
+                    sortField = field;
+                    sortOrder = order;
+                }
+
+                const response = await axios.get(`${SERVER_URL}/?sortField=${sortField}&sortOrder=${sortOrder}`);
                 setProducts(response.data.productList);
                 setLoading(false);
                 setTotalProducts(response.data.totalProducts);
@@ -60,7 +81,7 @@ const HomePage = () => {
             }
         };
         fetchProducts();
-    }, []);
+    }, [selectedSortOption]);
 
     const toggleFilter = (filterName) => {
         setFilterState((prev) => ({
@@ -84,6 +105,8 @@ const HomePage = () => {
         });
     };
 
+    const handleSortChange = (e) => setSelectedSortOption(e.target.value);
+
     return (
         <MainContainer>
             <div className="flex">
@@ -95,10 +118,14 @@ const HomePage = () => {
                         <p>Found {totalProducts} results</p>
                         <div className="flex items-center space-x-2">
                             <span className="text-gray-700 font-medium">Sort by</span>
-                            <select className="p-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                                <option defaultChecked>Most popular</option>
-                                <option>From low to high</option>
-                                <option>From high to low</option>
+                            <select className="p-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" value={selectedSortOption} onChange={handleSortChange}>
+                                {sortList.flatMap((option) => {
+                                    return option.type.map((subType, index) => (
+                                        <option key={`${option.name}-${subType}-${index}`} value={`${option.name}-${subType}`}>
+                                            {subType.charAt(0).toUpperCase() + subType.slice(1)} by {option.name}
+                                        </option>
+                                    ));
+                                })}
                             </select>
                         </div>
                     </div>

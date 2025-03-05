@@ -86,9 +86,14 @@ app.get("/", async (req, res) => {
     try {
         let page = parseInt(req.query.page) || 1,
             limit = parseInt(req.query.limit) || 20,
-            skipList = (page - 1) * limit;
+            skipList = (page - 1) * limit,
+            sortField = req.query.sortField || "price",
+            sortOrder = req.query.sortOrder === "lowest" ? 1 : -1;
 
         const filterQuery = {};
+        const sortOption = {
+            [sortField]: sortOrder,
+        };
 
         if (req.query.category && req.query.category !== "all") filterQuery.category = req.query.category;
 
@@ -104,7 +109,7 @@ app.get("/", async (req, res) => {
             if (priceRanges[req.query.price]) Object.assign(filterQuery, priceRanges[req.query.price]);
         }
 
-        const productList = await Product.find(filterQuery).skip(skipList).limit(limit);
+        const productList = await Product.find(filterQuery).skip(skipList).sort(sortOption).limit(limit);
         const totalProducts = await Product.countDocuments();
 
         return res.status(200).json({
