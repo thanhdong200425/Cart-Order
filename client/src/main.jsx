@@ -5,6 +5,7 @@ import "./index.css";
 import SignInPage from "../pages/authentication/SignInPage";
 import SignUpPage from "../pages/authentication/SignUpPage";
 import HomePage from "../pages/main/HomePage";
+import CartPage from "../pages/main/CartPage";
 
 createRoot(document.getElementById("root")).render(
     <BrowserRouter>
@@ -13,6 +14,7 @@ createRoot(document.getElementById("root")).render(
                 <Route path="/sign-in" element={<SignInPage />} />
                 <Route path="/sign-up" element={<SignUpPage />} />
                 <Route path="/" element={<HomePage />} />
+                <Route path="/cart" element={<CartPage />} />
             </Routes>
         </StrictMode>
     </BrowserRouter>
