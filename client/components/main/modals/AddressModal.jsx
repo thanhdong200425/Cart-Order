@@ -68,15 +68,15 @@ const AddressModal = () => {
     const closeModal = () => setIsOpenModal(false);
     return (
         <>
-            <div className="flex justify-between border border-blue-300 items-centerborder-blue-300 rounded-xl p-2 hover:cursor-pointer" onClick={openModal}>
-                <p className="flex items-center gap-2 text-sm text-blue-500">
-                    <span>
-                        <AiFillShop size={15} color="red" />
+            <div className="flex justify-between items-center border border-blue-200 rounded-xl p-4 transition-all duration-200 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 hover:shadow-md hover:cursor-pointer" onClick={openModal}>
+                <p className="flex items-center gap-3 text-blue-600">
+                    <span className="p-2 bg-white rounded-full shadow-sm">
+                        <AiFillShop size={18} color="#3B82F6" />
                     </span>
                     Please provide address to receive order
                 </p>
-                <button>
-                    <FcNext size={15} />
+                <button className="p-1 rounded-full hover:bg-blue-200 transition-colors">
+                    <FcNext size={18} />
                 </button>
             </div>
             <Modal isOpen={isOpenModal} onClose={closeModal} title={"Delivery Address"}>
