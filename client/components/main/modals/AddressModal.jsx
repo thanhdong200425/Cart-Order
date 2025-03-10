@@ -3,6 +3,9 @@ import { AiFillShop } from "react-icons/ai";
 import { FcNext } from "react-icons/fc";
 import Modal from "./Modal";
 import axios from "axios";
+import DropdownSelect from "../selects/DropdownSelect";
+import TextField from "../../inputs/TextField";
+import SubmitButton from "../../buttons/SubmitButton";
 
 const AddressModal = () => {
     const [isOpenModal, setIsOpenModal] = useState(false);
@@ -12,19 +15,41 @@ const AddressModal = () => {
         gender: "male",
     });
     const [addressInfo, setAddressInfo] = useState({
-        province: "",
-        district: "",
-        commune: "",
-        address: "",
+        province: null,
+        district: null,
+        commune: null,
+        address: null,
     });
 
-    const [provinceInput, setProvinceInput] = useState([]);
-    const [districtInput, setDistrictInput] = useState([]);
-    const [communeInput, setCommuneInput] = useState([]);
+    const [provinceInput, setProvinceInput] = useState("");
+    const [districtInput, setDistrictInput] = useState("");
+    const [communeInput, setCommuneInput] = useState("");
 
+    // Fetch all cities
     useEffect(() => {
-        getProvinces().then((result) => setProvinceInput(result));
+        getProvinces().then((result) => {
+            setProvinceInput(result);
+            setAddressInfo((prev) => ({ ...prev, province: result[0].id }));
+        });
     }, []);
+
+    // Fetch all districst based on specific province/city
+    useEffect(() => {
+        if (addressInfo.province)
+            getDistricsBasedOnProvice(addressInfo.province).then((result) => {
+                setDistrictInput(result);
+                setAddressInfo((prev) => ({ ...prev, district: result[0].id }));
+            });
+    }, [addressInfo.province]);
+
+    // Fetch all communes based on specific districts
+    useEffect(() => {
+        if (addressInfo.district)
+            getCommunesBasedOnDistrict(addressInfo.district).then((result) => {
+                setCommuneInput(result);
+                setAddressInfo((prev) => ({ ...prev, commune: result && result.length > 0 ? result[0].id : null }));
+            });
+    }, [addressInfo.district]);
 
     const handleGenderChange = (e) => {
         setInfoUser((prev) => ({
@@ -32,6 +57,10 @@ const AddressModal = () => {
             gender: e.target.value,
         }));
     };
+
+    const handleAddressChange = (e) => setAddressInfo((prev) => ({ ...prev, address: e.target.value }));
+    const handleFullNameChange = (e) => setInfoUser((prev) => ({ ...prev, fullName: e.target.value }));
+    const handlePhoneNumberChange = (e) => setInfoUser((prev) => ({ ...prev, phoneNumber: e.target.value }));
 
     const genderList = ["male", "female"];
 
@@ -67,34 +96,22 @@ const AddressModal = () => {
                         </div>
 
                         {/* Other input fields */}
-                        <input type="text" placeholder="Full name" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value={infoUser.fullName} />
-                        <input type="tel" placeholder="Phone number" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value={infoUser.phoneNumber} />
+                        <TextField value={infoUser.fullName} placeholder="Your full name" onChange={handleFullNameChange} />
+                        <TextField value={infoUser.phoneNumber} placeholder="Your phone number" onChange={handlePhoneNumberChange} type="tel" />
 
                         {/* Divider */}
                         <hr className="h-2 bg-gray-300 border-none my-5" />
 
                         <label className="block text-xl font-medium text-gray-700 mb-5">Delivery method</label>
-                        <div className="relative">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Province/City</label>
-                            <div className="relative">
-                                <select value={addressInfo.province} onChange={(e) => setAddressInfo((prev) => ({ ...prev, province: e.target.value }))} className="block w-full pl-4 pr-10 py-2.5 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-lg shadow-sm appearance-none bg-white">
-                                    <option value="" disabled>
-                                        Select province/city
-                                    </option>
-                                    {provinceInput.map((province, index) => (
-                                        <option key={index} value={province.slug}>
-                                            {province.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {/* Custom arrow icon */}
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
+                        {/* Select province/city */}
+                        <DropdownSelect value={addressInfo.province} onChange={(e) => setAddressInfo((prev) => ({ ...prev, province: e.target.value }))} inputSets={provinceInput} defaultValue={"Select province/city"} placeholder={"Your city/province"} />
+                        {/* Select district */}
+                        <DropdownSelect value={addressInfo.district} onChange={(e) => setAddressInfo((prev) => ({ ...prev, district: e.target.value }))} inputSets={districtInput} defaultValue={"Select district"} placeholder={"Your district"} />
+                        {/* Select commune */}
+                        <DropdownSelect value={addressInfo.commune} onChange={(e) => setAddressInfo((prev) => ({ ...prev, commune: e.target.value }))} inputSets={communeInput} defaultValue={"Select commune"} placeholder={"Your commune"} />
+                        <TextField placeholder={"Your address"} value={addressInfo.address} onChange={handleAddressChange} />
+
+                        <SubmitButton content={"Confirm"} styles={"mt-5"} onClick={closeModal} />
                     </div>
                 </form>
             </Modal>
@@ -109,6 +126,26 @@ const getProvinces = async () => {
     } catch (error) {
         console.log("Error when get provinces: " + error);
         return;
+    }
+};
+
+const getDistricsBasedOnProvice = async (provinceId) => {
+    try {
+        const response = await axios.get(`https://open.oapi.vn/location/districts/${provinceId}`);
+        return response.data.data;
+    } catch (error) {
+        console.log("Error in getDistrict: " + error);
+        return null;
+    }
+};
+
+const getCommunesBasedOnDistrict = async (districtId) => {
+    try {
+        const response = await axios.get(`https://open.oapi.vn/location/wards/${districtId}`);
+        return response.data.data;
+    } catch (error) {
+        console.log("Error in getCommune: " + error);
+        return null;
     }
 };
 
