@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { FiSearch, FiShoppingCart, FiChevronDown, FiUser } from "react-icons/fi";
+import CartContext from "../../context/CartContext";
 
 const NavigationBar = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
-    const [cartCount, setCartCount] = useState(0);
+    const { getQuantityItemInCart } = useContext(CartContext);
+    const cartCount = getQuantityItemInCart || 0;
 
     // Sample categories - replace with your actual categories
     const categories = ["Electronics", "Clothing", "Home & Kitchen", "Beauty", "Books"];

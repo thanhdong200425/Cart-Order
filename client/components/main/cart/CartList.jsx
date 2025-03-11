@@ -1,9 +1,10 @@
+import CartContext from "../../../context/CartContext";
 import CartItem from "./CartItem";
+import { useContext } from "react";
 
 const CartList = ({ items, onIncreaseQuantity, onDecreaseQuantity }) => {
-    const calculateTotal = () => {
-        return items.reduce((total, item) => total + item.price * item.quantity, 0);
-    };
+    const { getTotalPriceInCart } = useContext(CartContext);
+    const totalPrice = getTotalPriceInCart;
 
     return (
         <div className="bg-white rounded-xl overflow-hidden transition-all duration-300">
@@ -13,7 +14,7 @@ const CartList = ({ items, onIncreaseQuantity, onDecreaseQuantity }) => {
 
             <div className="divide-y divide-gray-100 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-50">
                 {items && items.length > 0 ? (
-                    items.map((item) => <CartItem key={item.id} item={item} onIncreaseQuantity={onIncreaseQuantity} onDecreaseQuantity={onDecreaseQuantity} />)
+                    items.map((item) => <CartItem key={item._id} item={item} onIncreaseQuantity={onIncreaseQuantity} onDecreaseQuantity={onDecreaseQuantity} />)
                 ) : (
                     <div className="p-12 text-center">
                         <div className="inline-block p-4 rounded-full bg-gray-50 mb-4">
@@ -31,7 +32,7 @@ const CartList = ({ items, onIncreaseQuantity, onDecreaseQuantity }) => {
                 <div className="p-5 border-t border-gray-100 bg-gray-50">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-gray-600">Subtotal</span>
-                        <span className="font-medium">${calculateTotal().toFixed(2)}</span>
+                        <span className="font-medium">${totalPrice.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center mb-4">
                         <span className="text-gray-600">Shipping</span>
@@ -39,7 +40,7 @@ const CartList = ({ items, onIncreaseQuantity, onDecreaseQuantity }) => {
                     </div>
                     <div className="flex justify-between items-center mb-6 pt-3 border-t border-gray-200">
                         <span className="font-bold text-gray-800">Total</span>
-                        <span className="font-bold text-xl">${calculateTotal().toFixed(2)}</span>
+                        <span className="font-bold text-xl">${totalPrice.toFixed(2)}</span>
                     </div>
                 </div>
             )}

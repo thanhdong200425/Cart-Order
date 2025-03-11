@@ -3,66 +3,16 @@ import CartList from "../../components/main/cart/CartList";
 import CheckoutContainer from "../../components/main/cart/CheckoutContainer";
 import Tab from "../../components/main/cart/Tab";
 import TabList from "../../components/main/cart/TabList";
-import { useState } from "react";
+import {useContext} from "react";
+import CartContext from "../../context/CartContext.jsx";
+
 
 const CartPage = () => {
-    const [cartItems, setCartItems] = useState([
-        {
-            id: 1,
-            name: "Premium Wireless Headphones",
-            price: 149.99,
-            quantity: 1,
-            image: "https://picsum.photos/id/1/200/200",
-            description: "Noise cancelling, 30-hour battery life",
-        },
-        {
-            id: 2,
-            name: "Smart Fitness Watch",
-            price: 89.95,
-            quantity: 2,
-            image: "https://picsum.photos/id/26/200/200",
-            description: "Water-resistant, heart rate monitor",
-        },
-        {
-            id: 3,
-            name: "Portable Power Bank",
-            price: 29.99,
-            quantity: 1,
-            image: "https://picsum.photos/id/250/200/200",
-            description: "10000mAh, fast charging",
-        },
-        {
-            id: 4,
-            name: "Bluetooth Speaker",
-            price: 59.99,
-            quantity: 1,
-            image: "https://picsum.photos/id/3/200/200",
-            description: "Waterproof, 20-hour playtime",
-        },
-        {
-            id: 5,
-            name: "Bluetooth Speaker",
-            price: 59.99,
-            quantity: 1,
-            image: "https://picsum.photos/id/3/200/200",
-            description: "Waterproof, 20-hour playtime",
-        },
-        {
-            id: 6,
-            name: "Bluetooth Speaker",
-            price: 59.99,
-            quantity: 1,
-            image: "https://picsum.photos/id/3/200/200",
-            description: "Waterproof, 20-hour playtime",
-        },
-    ]);
+    const { cartItems, toggleQuantity } = useContext(CartContext);
 
-    const handleIncreaseQuantity = (itemId) => {
-        setCartItems(cartItems.map((item) => (item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item)));
-    };
-    const handleDecreaseQuantity = (itemId) => {
-        setCartItems(cartItems.map((item) => (item.id === itemId ? { ...item, quantity: item.quantity - 1 } : item)).filter((item) => !(item.id === itemId && item.quantity === 0)));
-    };
+    const handleIncreaseQuantity = (itemId) => toggleQuantity(itemId);
+
+    const handleDecreaseQuantity = (itemId) => toggleQuantity(itemId, "decrease");
 
     return (
         <MainContainer>
@@ -75,9 +25,9 @@ const CartPage = () => {
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 p-4">
                     <TabList>
                         <Tab label="Delivery in place">
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6">
-                                <div className={`lg:col-span-${cartItems.length > 0 ? "2" : "3 col-span-full"}`}>
-                                    <CartList items={cartItems} onIncreaseQuantity={handleIncreaseQuantity} onDecreaseQuantity={handleDecreaseQuantity} />
+                            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-8 p-6">
+                                <div className="lg:col-span-2">
+                                    <CartList items={cartItems} onIncreaseQuantity={handleIncreaseQuantity} onDecreaseQuantity={handleDecreaseQuantity} />{" "}
                                 </div>
                                 <div className="lg:col-span-1">
                                     <div className="sticky top-24">{cartItems.length > 0 && <CheckoutContainer />}</div>

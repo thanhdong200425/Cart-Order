@@ -1,5 +1,5 @@
 const CartItem = ({ item, onIncreaseQuantity, onDecreaseQuantity }) => {
-    const { image, name, price, quantity, description } = item;
+    const { image, name, price, quantity, description, _id } = item;
 
     return (
         <div className="flex items-center justify-between p-5 transition-colors hover:bg-gray-50">
@@ -16,13 +16,13 @@ const CartItem = ({ item, onIncreaseQuantity, onDecreaseQuantity }) => {
             </div>
 
             <div className="flex items-center space-x-3">
-                <button onClick={() => onDecreaseQuantity(item.id)} className="w-8 h-8 rounded-full bg-gray-100 text-gray-800 flex items-center justify-center hover:bg-gray-200 transition-colors border border-gray-200" aria-label="Decrease quantity">
+                <button onClick={() => onDecreaseQuantity(_id)} className="w-8 h-8 rounded-full bg-gray-100 text-gray-800 flex items-center justify-center hover:bg-gray-200 transition-colors border border-gray-200" aria-label="Decrease quantity">
                     <span className="text-lg font-medium">-</span>
                 </button>
 
                 <span className="w-8 text-center font-medium text-gray-800">{quantity}</span>
 
-                <button onClick={() => onIncreaseQuantity(item.id)} className="w-8 h-8 rounded-full bg-gray-100 text-gray-800 flex items-center justify-center hover:bg-gray-200 transition-colors border border-gray-200" aria-label="Increase quantity">
+                <button onClick={() => onIncreaseQuantity(_id)} className="w-8 h-8 rounded-full bg-gray-100 text-gray-800 flex items-center justify-center hover:bg-gray-200 transition-colors border border-gray-200" aria-label="Increase quantity">
                     <span className="text-lg font-medium">+</span>
                 </button>
             </div>
