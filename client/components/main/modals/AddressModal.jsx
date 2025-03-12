@@ -15,10 +15,10 @@ const AddressModal = () => {
         gender: "male",
     });
     const [addressInfo, setAddressInfo] = useState({
-        province: null,
-        district: null,
-        commune: null,
-        address: null,
+        province: { id: "", name: null },
+        district: { id: "", name: null },
+        commune: { id: "", name: null },
+        address: "",
     });
 
     const [provinceInput, setProvinceInput] = useState("");
@@ -29,38 +29,86 @@ const AddressModal = () => {
     useEffect(() => {
         getProvinces().then((result) => {
             setProvinceInput(result);
-            setAddressInfo((prev) => ({ ...prev, province: result[0].id }));
+            setAddressInfo((prev) => ({
+                ...prev,
+                province: {
+                    id: result[0].id,
+                    name: result[0].name,
+                },
+            }));
         });
     }, []);
 
     // Fetch all districst based on specific province/city
     useEffect(() => {
-        if (addressInfo.province)
-            getDistricsBasedOnProvice(addressInfo.province).then((result) => {
+        if (addressInfo.province.id && addressInfo.province.name)
+            getDistricsBasedOnProvice(addressInfo.province.id).then((result) => {
                 setDistrictInput(result);
-                setAddressInfo((prev) => ({ ...prev, district: result[0].id }));
+                setAddressInfo((prev) => ({
+                    ...prev,
+                    district: {
+                        id: result[0].id,
+                        name: result[0].name,
+                    },
+                }));
             });
     }, [addressInfo.province]);
 
     // Fetch all communes based on specific districts
     useEffect(() => {
-        if (addressInfo.district)
-            getCommunesBasedOnDistrict(addressInfo.district).then((result) => {
+        if (addressInfo.district.id && addressInfo.district.name)
+            getCommunesBasedOnDistrict(addressInfo.district.id).then((result) => {
                 setCommuneInput(result);
-                setAddressInfo((prev) => ({ ...prev, commune: result && result.length > 0 ? result[0].id : null }));
+                setAddressInfo((prev) => ({
+                    ...prev,
+                    commune:
+                        result && result.length > 0
+                            ? {
+                                  id: result[0].id,
+                                  name: result[0].name,
+                              }
+                            : null,
+                }));
             });
     }, [addressInfo.district]);
 
     const handleGenderChange = (e) => {
-        setInfoUser((prev) => ({
-            ...prev,
+        setInfoUser({
+            ...infoUser,
             gender: e.target.value,
-        }));
+        });
     };
 
-    const handleAddressChange = (e) => setAddressInfo((prev) => ({ ...prev, address: e.target.value }));
-    const handleFullNameChange = (e) => setInfoUser((prev) => ({ ...prev, fullName: e.target.value }));
-    const handlePhoneNumberChange = (e) => setInfoUser((prev) => ({ ...prev, phoneNumber: e.target.value }));
+    const handleAddressChange = (e) => {
+        setAddressInfo({
+            ...addressInfo,
+            address: e.target.value,
+        });
+    };
+    const handleFullNameChange = (e) => {
+        setInfoUser({
+            ...infoUser,
+            fullName: e.target.value,
+        });
+    };
+    const handlePhoneNumberChange = (e) => {
+        setInfoUser({
+            ...infoUser,
+            phoneNumber: e.target.value,
+        });
+    };
+    const handleAddressInputChange = (e, inputColumn, nameColumn) => {
+        const selectedId = e.target.value;
+        const selectedColumn = inputColumn.find((item) => item.id === selectedId) || { id: null, name: null };
+
+        return setAddressInfo({
+            ...addressInfo,
+            [nameColumn]: {
+                id: selectedColumn.id,
+                name: selectedColumn.name,
+            },
+        });
+    };
 
     const genderList = ["male", "female"];
 
@@ -73,7 +121,7 @@ const AddressModal = () => {
                     <span className="p-2 bg-white rounded-full shadow-sm">
                         <AiFillShop size={18} color="#3B82F6" />
                     </span>
-                    Please provide address to receive order
+                    {addressInfo.address && addressInfo.commune.name && addressInfo.district.name && addressInfo.province.name ? `${addressInfo.address}, ${addressInfo.commune.name}, ${addressInfo.district.name}, ${addressInfo.province.name}` : "Please provide address to receive order"}
                 </p>
                 <button className="p-1 rounded-full hover:bg-blue-200 transition-colors">
                     <FcNext size={18} />
@@ -84,7 +132,7 @@ const AddressModal = () => {
                     <div className="space-y-5">
                         <label className="block text-xl font-medium text-gray-700 mb-5">Orderer information</label>
                         {/* Gender field */}
-                        <div className="flex gap-6">
+                        <div className="flex gap-6" key={infoUser.gender}>
                             {genderList.map((gen, index) => (
                                 <div className="flex items-center" key={index}>
                                     <input id={`gender-${gen}`} type="radio" value={gen} name="gender" checked={gen === infoUser.gender} onChange={handleGenderChange} className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
@@ -97,18 +145,18 @@ const AddressModal = () => {
 
                         {/* Other input fields */}
                         <TextField value={infoUser.fullName} placeholder="Your full name" onChange={handleFullNameChange} />
-                        <TextField value={infoUser.phoneNumber} placeholder="Your phone number" onChange={handlePhoneNumberChange} type="tel" />
+                        <TextField value={infoUser.phoneNumber} placeholder="Your phone number" onChange={handlePhoneNumberChange} type="tel" pattern="[0-9]{10}" />
 
                         {/* Divider */}
                         <hr className="h-2 bg-gray-300 border-none my-5" />
 
                         <label className="block text-xl font-medium text-gray-700 mb-5">Delivery method</label>
                         {/* Select province/city */}
-                        <DropdownSelect value={addressInfo.province} onChange={(e) => setAddressInfo((prev) => ({ ...prev, province: e.target.value }))} inputSets={provinceInput} defaultValue={"Select province/city"} placeholder={"Your city/province"} />
+                        <DropdownSelect value={addressInfo.province.id} onChange={(e) => handleAddressInputChange(e, provinceInput, "province")} inputSets={provinceInput} defaultValue={"Select province/city"} placeholder={"Your city/province"} />
                         {/* Select district */}
-                        <DropdownSelect value={addressInfo.district} onChange={(e) => setAddressInfo((prev) => ({ ...prev, district: e.target.value }))} inputSets={districtInput} defaultValue={"Select district"} placeholder={"Your district"} />
+                        <DropdownSelect value={addressInfo.district.id} onChange={(e) => handleAddressInputChange(e, districtInput, "district")} inputSets={districtInput} defaultValue={"Select district"} placeholder={"Your district"} />
                         {/* Select commune */}
-                        <DropdownSelect value={addressInfo.commune} onChange={(e) => setAddressInfo((prev) => ({ ...prev, commune: e.target.value }))} inputSets={communeInput} defaultValue={"Select commune"} placeholder={"Your commune"} />
+                        <DropdownSelect value={addressInfo.commune.id} onChange={(e) => handleAddressInputChange(e, communeInput, "commune")} inputSets={communeInput} defaultValue={"Select commune"} placeholder={"Your commune"} />
                         <TextField placeholder={"Your address"} value={addressInfo.address} onChange={handleAddressChange} />
 
                         <SubmitButton content={"Confirm"} styles={"mt-5"} onClick={closeModal} />
