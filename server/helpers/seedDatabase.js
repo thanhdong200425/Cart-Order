@@ -6,14 +6,20 @@ import dotenv from "dotenv";
 dotenv.config({ path: "../.env" });
 
 const generateFakeProducts = async (quantity) => {
-    return Array.from({ length: quantity }, () => ({
-        name: faker.commerce.productName(),
-        price: parseFloat(faker.commerce.price({ min: 1, max: 5000, dec: 0 })),
-        category: faker.commerce.department(),
-        description: faker.commerce.productDescription(),
-        stock: faker.number.int({ min: 0, max: 1000 }),
-        image: faker.image.urlPicsumPhotos(),
-    }));
+    return Array.from({ length: quantity }, () => {
+        const randomImageQuantity = faker.number.int({ min: 2, max: 5 });
+        const images = Array.from({ length: randomImageQuantity }, () => faker.image.urlPicsumPhotos());
+
+        return {
+            name: faker.commerce.productName(),
+            price: parseFloat(faker.commerce.price({ min: 1, max: 5000, dec: 0 })),
+            category: faker.commerce.department(),
+            description: faker.commerce.productDescription(),
+            stock: faker.number.int({ min: 0, max: 1000 }),
+            image: images[0],
+            list_image: images,
+        };
+    });
 };
 
 const seedDB = async () => {
