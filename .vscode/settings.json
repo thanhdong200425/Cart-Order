@@ -1,3 +1,8 @@
 {
-    "postman.settings.dotenv-detection-notification-visibility": false
+    "postman.settings.dotenv-detection-notification-visibility": false,
+    "github.copilot.chat.commitMessageGeneration.instructions": [
+        {
+            "text": "Be extremely detaild with the change and write as numerical order. Add some emojis if needed."
+        }
+    ]
 }
