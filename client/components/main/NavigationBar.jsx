@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import { FiSearch, FiShoppingCart, FiChevronDown, FiUser } from "react-icons/fi";
 import CartContext from "../../context/CartContext";
+import { Link } from "react-router-dom";
 
 const NavigationBar = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -17,9 +18,9 @@ const NavigationBar = () => {
                 <div className="flex items-center justify-between">
                     {/* Logo Section */}
                     <div className="flex-shrink-0">
-                        <a href="/" className="flex items-center">
+                        <Link to="/" className="flex items-center">
                             <img src="/logo.jpg" alt="Store Logo" className="h-[5rem] w-full mr-2 transform transition-transform ease-in duration-200 hover:scale-120" />
-                        </a>
+                        </Link>
                     </div>
 
                     {/* Categories and Search */}
@@ -85,10 +86,10 @@ const NavigationBar = () => {
                         </div>
 
                         {/* Cart Button */}
-                        <a href="/cart" className="relative p-2 hover:bg-gray-200 rounded-full transition-colors">
+                        <Link to="/cart" className="relative p-2 hover:bg-gray-200 rounded-full transition-colors">
                             <FiShoppingCart className="text-xl text-gray-700" />
                             {cartCount > 0 && <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">{cartCount}</span>}
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </div>

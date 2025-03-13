@@ -21,11 +21,8 @@ app.use(express.json());
 // Create a middleware to only allow request from server that has port: 5173
 // Middleware to validate request origin - only allows requests from port 5173
 app.use((req, res, next) => {
-    // Log the origin for debugging
     console.log(req.headers.origin);
-    // Check if origin exists and is valid
     if (req.headers.origin && validateOrigin(req)) return next();
-    // Reject invalid origins
     return res.status(400).json({ error: "Your domain is not allowed" });
 });
 
@@ -167,6 +164,18 @@ app.get("/get-category", async (req, res) => {
         return res.status(200).json({ categoryList });
     } catch (error) {
         console.log("Error in get-category route: " + error);
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+app.get("/product/:productId", async (req, res) => {
+    try {
+        const productId = req.params.productId;
+        const product = await Product.findOne({ _id: productId });
+        if (!product) return res.status(404).json({ error: "Product not found" });
+        return res.status(200).json({ data: product });
+    } catch (error) {
+        console.log("Error in get specific product route: " + error);
         return res.status(500).json({ error: error.message });
     }
 });

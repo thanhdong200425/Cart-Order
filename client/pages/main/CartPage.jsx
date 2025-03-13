@@ -3,9 +3,8 @@ import CartList from "../../components/main/cart/CartList";
 import CheckoutContainer from "../../components/main/cart/CheckoutContainer";
 import Tab from "../../components/main/cart/Tab";
 import TabList from "../../components/main/cart/TabList";
-import {useContext} from "react";
+import { useContext } from "react";
 import CartContext from "../../context/CartContext.jsx";
-
 
 const CartPage = () => {
     const { cartItems, toggleQuantity } = useContext(CartContext);

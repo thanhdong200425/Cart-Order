@@ -51,9 +51,7 @@ const HomePage = () => {
 
     // Show/hide scroll-to-top button based on scroll position
     useEffect(() => {
-        const handleScroll = () => {
-            setScrollToTopVisible(window.scrollY > 300);
-        };
+        const handleScroll = () => setScrollToTopVisible(window.scrollY > 300);
 
         window.addEventListener("scroll", handleScroll);
 

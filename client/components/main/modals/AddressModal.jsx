@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AiFillShop } from "react-icons/ai";
 import { FcNext } from "react-icons/fc";
 import Modal from "./Modal";
@@ -6,71 +6,86 @@ import axios from "axios";
 import DropdownSelect from "../selects/DropdownSelect";
 import TextField from "../../inputs/TextField";
 import SubmitButton from "../../buttons/SubmitButton";
+import InfoUserContext from "../../../context/InfoContext";
+
+const apiCache = {
+    provinces: null,
+    districts: {},
+    communes: {},
+};
+
+/**
+ * Custom hook for fetching and caching location data (provinces, districts, communes)
+ * @param {string} url - API endpoint to fetch data from
+ * @param {string} cacheKey - Key to store data in the cache ('provinces', 'districts', 'communes')
+ * @param {string|boolean} dependency - The parent location ID that this data depends on
+ * @param {Object} infoUser - User information containing selected locations
+ * @param {Function} setInfoUser - Function to update user information
+ * @param {string} infoUserKey - Key in infoUser object to update ('province', 'district', 'commune')
+ * @returns {Array} - Array of location data
+ */
+const useLocationData = (url, cacheKey, dependency, infoUser, setInfoUser, infoUserKey) => {
+    const [data, setData] = useState([]);
+    useEffect(() => {
+        const fetchData = async () => {
+            // Skip if dependency is not available (needed for districts/communes)
+            if (!dependency) return;
+
+            // Determine if we should use the root cache or a nested cache based on dependency
+            const cacheValue = cacheKey === "provinces" ? apiCache[cacheKey] : apiCache[cacheKey][dependency];
+
+            // If cache value exists, use it instead of making a new API request
+            if (cacheValue) {
+                setData(cacheValue);
+                // Set default value if none is selected yet
+                if (!infoUser[infoUserKey]?.id) updateDefaultValue(cacheValue);
+                return;
+            }
+
+            // If no cache exists, fetch data from API
+            try {
+                const response = await axios.get(url);
+                const result = response.data.data || [];
+
+                // Store in cache differently based on whether it's provinces (root) or districts/communes (nested)
+                if (infoUserKey === "province") apiCache[cacheKey] = result;
+                else apiCache[cacheKey][dependency] = result;
+
+                setData(result);
+                // Set default value if none is selected yet
+                if (!infoUser[infoUserKey]?.id) updateDefaultValue(result);
+            } catch (error) {
+                console.error(`Error fetching ${infoUserKey}:`, error);
+                setData([]);
+            }
+        };
+
+        /**
+         * Sets the default selection to the first item in the result array
+         * @param {Array} result - Array of location items
+         */
+        const updateDefaultValue = (result) => {
+            if (result.length > 0) {
+                setInfoUser((prev) => ({
+                    ...prev,
+                    [infoUserKey]: { id: result[0].id, name: result[0].name },
+                }));
+            }
+        };
+
+        fetchData();
+    }, [dependency, infoUser, setInfoUser, infoUserKey, url, cacheKey]);
+
+    return data;
+};
 
 const AddressModal = () => {
     const [isOpenModal, setIsOpenModal] = useState(false);
-    const [infoUser, setInfoUser] = useState({
-        fullName: "",
-        phoneNumber: "",
-        gender: "male",
-    });
-    const [addressInfo, setAddressInfo] = useState({
-        province: { id: "", name: null },
-        district: { id: "", name: null },
-        commune: { id: "", name: null },
-        address: "",
-    });
+    const [infoUser, setInfoUser] = useContext(InfoUserContext);
 
-    const [provinceInput, setProvinceInput] = useState("");
-    const [districtInput, setDistrictInput] = useState("");
-    const [communeInput, setCommuneInput] = useState("");
-
-    // Fetch all cities
-    useEffect(() => {
-        getProvinces().then((result) => {
-            setProvinceInput(result);
-            setAddressInfo((prev) => ({
-                ...prev,
-                province: {
-                    id: result[0].id,
-                    name: result[0].name,
-                },
-            }));
-        });
-    }, []);
-
-    // Fetch all districst based on specific province/city
-    useEffect(() => {
-        if (addressInfo.province.id && addressInfo.province.name)
-            getDistricsBasedOnProvice(addressInfo.province.id).then((result) => {
-                setDistrictInput(result);
-                setAddressInfo((prev) => ({
-                    ...prev,
-                    district: {
-                        id: result[0].id,
-                        name: result[0].name,
-                    },
-                }));
-            });
-    }, [addressInfo.province]);
-
-    // Fetch all communes based on specific districts
-    useEffect(() => {
-        if (addressInfo.district.id && addressInfo.district.name)
-            getCommunesBasedOnDistrict(addressInfo.district.id).then((result) => {
-                setCommuneInput(result);
-                setAddressInfo((prev) => ({
-                    ...prev,
-                    commune:
-                        result && result.length > 0
-                            ? {
-                                  id: result[0].id,
-                                  name: result[0].name,
-                              }
-                            : null,
-                }));
-            });
-    }, [addressInfo.district]);
+    const provinces = useLocationData("https://open.oapi.vn/location/provinces?size=63", "provinces", true, infoUser, setInfoUser, "province");
+    const districts = useLocationData(`https://open.oapi.vn/location/districts/${infoUser.province?.id}`, "districts", infoUser.province?.id, infoUser, setInfoUser, "district");
+    const communes = useLocationData(`https://open.oapi.vn/location/wards/${infoUser.district?.id}`, "communes", infoUser.district?.id, infoUser, setInfoUser, "commune");
 
     const handleGenderChange = (e) => {
         setInfoUser({
@@ -80,8 +95,8 @@ const AddressModal = () => {
     };
 
     const handleAddressChange = (e) => {
-        setAddressInfo({
-            ...addressInfo,
+        setInfoUser({
+            ...infoUser,
             address: e.target.value,
         });
     };
@@ -101,8 +116,8 @@ const AddressModal = () => {
         const selectedId = e.target.value;
         const selectedColumn = inputColumn.find((item) => item.id === selectedId) || { id: null, name: null };
 
-        return setAddressInfo({
-            ...addressInfo,
+        return setInfoUser({
+            ...infoUser,
             [nameColumn]: {
                 id: selectedColumn.id,
                 name: selectedColumn.name,
@@ -121,13 +136,14 @@ const AddressModal = () => {
                     <span className="p-2 bg-white rounded-full shadow-sm">
                         <AiFillShop size={18} color="#3B82F6" />
                     </span>
-                    {addressInfo.address && addressInfo.commune.name && addressInfo.district.name && addressInfo.province.name ? `${addressInfo.address}, ${addressInfo.commune.name}, ${addressInfo.district.name}, ${addressInfo.province.name}` : "Please provide address to receive order"}
+                    {infoUser.address && infoUser.commune.name && infoUser.district.name && infoUser.province.name ? `${infoUser.address}, ${infoUser.commune.name}, ${infoUser.district.name}, ${infoUser.province.name}` : "Please provide address to receive order"}
                 </p>
                 <button className="p-1 rounded-full hover:bg-blue-200 transition-colors">
                     <FcNext size={18} />
                 </button>
             </div>
             <Modal isOpen={isOpenModal} onClose={closeModal} title={"Delivery Address"}>
+                {/* Main part */}
                 <form className="space-y-4 p-4">
                     <div className="space-y-5">
                         <label className="block text-xl font-medium text-gray-700 mb-5">Orderer information</label>
@@ -152,12 +168,12 @@ const AddressModal = () => {
 
                         <label className="block text-xl font-medium text-gray-700 mb-5">Delivery method</label>
                         {/* Select province/city */}
-                        <DropdownSelect value={addressInfo.province.id} onChange={(e) => handleAddressInputChange(e, provinceInput, "province")} inputSets={provinceInput} defaultValue={"Select province/city"} placeholder={"Your city/province"} />
+                        <DropdownSelect value={infoUser.province.id} onChange={(e) => handleAddressInputChange(e, provinces, "province")} inputSets={provinces} defaultValue={"Select province/city"} placeholder={"Your city/province"} />
                         {/* Select district */}
-                        <DropdownSelect value={addressInfo.district.id} onChange={(e) => handleAddressInputChange(e, districtInput, "district")} inputSets={districtInput} defaultValue={"Select district"} placeholder={"Your district"} />
+                        <DropdownSelect value={infoUser.district.id} onChange={(e) => handleAddressInputChange(e, districts, "district")} inputSets={districts} defaultValue={"Select district"} placeholder={"Your district"} />
                         {/* Select commune */}
-                        <DropdownSelect value={addressInfo.commune.id} onChange={(e) => handleAddressInputChange(e, communeInput, "commune")} inputSets={communeInput} defaultValue={"Select commune"} placeholder={"Your commune"} />
-                        <TextField placeholder={"Your address"} value={addressInfo.address} onChange={handleAddressChange} />
+                        <DropdownSelect value={infoUser.commune.id} onChange={(e) => handleAddressInputChange(e, communes, "commune")} inputSets={communes} defaultValue={"Select commune"} placeholder={"Your commune"} />
+                        <TextField placeholder={"Your address"} value={infoUser.address} onChange={handleAddressChange} />
 
                         <SubmitButton content={"Confirm"} styles={"mt-5"} onClick={closeModal} />
                     </div>
@@ -165,36 +181,6 @@ const AddressModal = () => {
             </Modal>
         </>
     );
-};
-
-const getProvinces = async () => {
-    try {
-        const response = await axios.get("https://open.oapi.vn/location/provinces?size=63");
-        return response.data.data;
-    } catch (error) {
-        console.log("Error when get provinces: " + error);
-        return;
-    }
-};
-
-const getDistricsBasedOnProvice = async (provinceId) => {
-    try {
-        const response = await axios.get(`https://open.oapi.vn/location/districts/${provinceId}`);
-        return response.data.data;
-    } catch (error) {
-        console.log("Error in getDistrict: " + error);
-        return null;
-    }
-};
-
-const getCommunesBasedOnDistrict = async (districtId) => {
-    try {
-        const response = await axios.get(`https://open.oapi.vn/location/wards/${districtId}`);
-        return response.data.data;
-    } catch (error) {
-        console.log("Error in getCommune: " + error);
-        return null;
-    }
 };
 
 export default AddressModal;
