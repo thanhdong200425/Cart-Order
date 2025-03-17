@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import MainContainer from "../../components/layouts/main/MainContainer";
 import { getProductById } from "../../helper_functions/product.js";
 import { toast } from "react-toastify";
+import CommentSection from "../../components/main/comments/CommentSection";
 
 const ProductPage = () => {
     const { productId } = useParams();
@@ -94,6 +95,9 @@ const ProductPage = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Comment Section */}
+                    <CommentSection productId={productId} />
                 </div>
             </div>
         </MainContainer>

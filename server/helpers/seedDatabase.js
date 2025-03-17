@@ -2,6 +2,8 @@ import { faker } from "@faker-js/faker";
 import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import dotenv from "dotenv";
+import User from "../models/User.js";
+import Comment from "../models/Comment.js";
 
 dotenv.config({ path: "../.env" });
 
@@ -22,6 +24,40 @@ const generateFakeProducts = async (quantity) => {
     });
 };
 
+const getRandomId = async (model) => {
+    const count = await model.countDocuments();
+    if (count === 0) return null;
+
+    const random = Math.floor(Math.random() * count);
+    const document = await model.findOne().skip(random);
+    return document?._id;
+};
+
+const generateFakeComments = async (quantity) => {
+    const users = await User.find();
+    const products = await Product.find();
+
+    if (users.length === 0 || products.length === 0) {
+        console.log("No users or products found for generating comments");
+        return [];
+    }
+
+    return Promise.all(
+        Array.from({ length: quantity }, async () => {
+            // Get a random user and product
+            const randomUser = users[Math.floor(Math.random() * users.length)];
+            const randomProduct = products[Math.floor(Math.random() * products.length)];
+
+            return {
+                userId: randomUser._id,
+                productId: randomProduct._id,
+                content: faker.lorem.sentence(),
+                rating: faker.number.int({ min: 1, max: 5 }),
+            };
+        })
+    );
+};
+
 const seedDB = async () => {
     try {
         await mongoose.connect(process.env.MONGODB_URI);
@@ -35,6 +71,15 @@ const seedDB = async () => {
 
         const insertedProducts = await Product.insertMany(dummyProductList);
         console.log(`${insertedProducts.length} were inserted!`);
+
+        await Comment.deleteMany({});
+        console.log("Previous comments were deleted");
+
+        const dummyCommentList = await generateFakeComments(30000);
+        console.log(`${dummyCommentList.length} were generated!`);
+
+        const insertedComments = await Comment.insertMany(dummyCommentList);
+        console.log(`${insertedComments.length} were inserted!`);
     } catch (error) {
         console.log("Error in seedDB: ", error);
     } finally {

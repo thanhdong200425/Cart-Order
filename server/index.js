@@ -4,10 +4,11 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import connectDB from "./config/db.js";
 import { validateOrigin, validateRequest } from "./helpers/checkRequest.js";
-import { createUser } from "./repository/UserRepository.js";
+import { createUser, getUserById } from "./repository/UserRepository.js";
 import { hashPassword, verifyPassword } from "./helpers/handlePassword.js";
 import User from "./models/User.js";
 import Product from "./models/Product.js";
+import { getCommentsByProductId, createComment } from "./repository/CommentRepository.js";
 
 dotenv.config();
 
@@ -176,6 +177,83 @@ app.get("/product/:productId", async (req, res) => {
         return res.status(200).json({ data: product });
     } catch (error) {
         console.log("Error in get specific product route: " + error);
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+// Route: Get comments for a specific product
+app.get("/product/:productId/comments", async (req, res) => {
+    try {
+        const { productId } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+
+        const commentsData = await getCommentsByProductId(productId, page, limit);
+
+        // Get user data for each comment
+        const commentsWithUserData = await Promise.all(
+            commentsData.comments.map(async (comment) => {
+                const user = await getUserById(comment.userId);
+                return {
+                    ...comment.toObject(),
+                    user: {
+                        name: user.name,
+                        email: user.email,
+                    },
+                };
+            })
+        );
+
+        return res.status(200).json({
+            comments: commentsWithUserData,
+            pagination: {
+                currentPage: commentsData.currentPage,
+                totalPages: commentsData.totalPages,
+                totalComments: commentsData.totalComments,
+            },
+        });
+    } catch (error) {
+        console.log("Error in get product comments route:", error);
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+// Route: Add a comment to a product
+app.post("/product/:productId/comments", async (req, res) => {
+    try {
+        const { productId } = req.params;
+        const { userId, content, rating } = req.body;
+
+        // Validate request
+        if (!userId || !content || !rating) {
+            return res.status(400).json({
+                error: "Missing required fields: userId, content, or rating",
+            });
+        }
+
+        // Create new comment
+        const newComment = await createComment({
+            userId,
+            productId,
+            content,
+            rating,
+        });
+
+        // Get user data to include in response
+        const user = await getUserById(userId);
+
+        // Return the new comment with user data
+        return res.status(201).json({
+            comment: {
+                ...newComment.toObject(),
+                user: {
+                    name: user.name,
+                    email: user.email,
+                },
+            },
+        });
+    } catch (error) {
+        console.log("Error in post product comment route:", error);
         return res.status(500).json({ error: error.message });
     }
 });
