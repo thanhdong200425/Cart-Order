@@ -1,14 +1,17 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
 import MainContainer from "../../components/layouts/main/MainContainer";
 import { getProductById } from "../../helper_functions/product.js";
 import { toast } from "react-toastify";
 import CommentSection from "../../components/main/comments/CommentSection";
+import CartContext from "../../context/CartContext.jsx";
 
 const ProductPage = () => {
     const { productId } = useParams();
     const [quantity, setQuantity] = useState(1);
     const [productInfo, setProductInfo] = useState({});
+    const { addProductToCart } = useContext(CartContext);
+    const navigate = useNavigate();
 
     useEffect(() => {
         getProductById(productId)
@@ -17,16 +20,15 @@ const ProductPage = () => {
     }, [productId]);
 
     const handleDecreaseQuantity = () => {
-        if (quantity > 1) {
-            setQuantity(quantity - 1);
-        }
+        if (quantity > 1) setQuantity(quantity - 1);
     };
 
     const handleIncreaseQuantity = () => {
-        if (quantity < productInfo.stock) {
-            setQuantity(quantity + 1);
-        }
+        if (quantity < productInfo.stock) setQuantity(quantity + 1);
     };
+
+    const handleAddToCart = () => addProductToCart(productInfo, quantity);
+    const navigateToCartPage = () => navigate("/cart");
 
     // If product data is loading or not found
     if (!productInfo) {
@@ -45,6 +47,7 @@ const ProductPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         {/* Product Image Gallery */}
                         <div className="space-y-6">
+                            {/* Carousel part */}
                             <div className="overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl">
                                 <img src={productInfo.image} alt={productInfo.name} className="w-full h-[600px] object-cover transform transition-transform duration-500 hover:scale-105" />
                             </div>
@@ -88,10 +91,14 @@ const ProductPage = () => {
                                         </button>
                                     </div>
 
-                                    <button className="flex-1 bg-blue-600 text-white py-3 px-8 rounded-full hover:bg-blue-700 transition-all duration-200 transform hover:translate-y-[-2px] shadow-md hover:shadow-lg font-medium">Add to Cart</button>
+                                    <button className="flex-1 bg-blue-600 text-white py-3 px-8 rounded-full hover:bg-blue-700 transition-all duration-200 transform hover:translate-y-[-2px] shadow-md hover:shadow-lg font-medium" onClick={handleAddToCart}>
+                                        Add to Cart
+                                    </button>
                                 </div>
 
-                                <button className="mt-6 w-full border-2 border-blue-600 text-blue-600 py-3 rounded-full hover:bg-blue-50 transition-all duration-200 font-medium">Buy Now</button>
+                                <button onClick={navigateToCartPage} className="mt-6 w-full border-2 border-blue-600 text-blue-600 py-3 rounded-full hover:bg-blue-50 transition-all duration-200 font-medium">
+                                    Buy Now
+                                </button>
                             </div>
                         </div>
                     </div>

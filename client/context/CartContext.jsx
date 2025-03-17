@@ -23,19 +23,19 @@ export const CartProvider = ({ children }) => {
     }, [cartItems]);
 
     // Add product to cart function
-    const addProductToCart = (product) => {
+    const addProductToCart = (product, quantity = 1) => {
         setCartItems((prevItems) => {
             const existingItem = prevItems.find((item) => item._id === product._id);
             if (existingItem) {
                 toast.info(`Increased ${product.name} quantity in cart by 1`, {
                     toastId: `increase-${product._id}-${Date.now()}`,
                 });
-                return prevItems.map((item) => (item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item));
+                return prevItems.map((item) => (item._id === product._id ? { ...item, quantity: item.quantity + quantity } : item));
             } else {
                 toast.success(`Added ${product.name} into cart`, {
                     toastId: `add-${product._id}-${Date.now()}`,
                 });
-                return [...prevItems, { ...product, quantity: 1 }];
+                return [...prevItems, { ...product, quantity: quantity }];
             }
         });
     };
@@ -49,7 +49,7 @@ export const CartProvider = ({ children }) => {
 
             // If current quantity of a product = 1 => remove it from cart
             if (existingItem && existingItem.quantity === 1) {
-                toast.info(`Remove ${existingItem.name} from cart`, {
+                toast.info(`Removed ${existingItem.name} from cart`, {
                     toastId: `remove-${productId}-${Date.now()}`,
                 });
                 return prevItems.filter((item) => item._id !== productId);

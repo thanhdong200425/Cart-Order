@@ -1,5 +1,5 @@
 import axios from "axios";
-import {SERVER_URL} from "../config.js";
+import { SERVER_URL } from "../config.js";
 
 export const getProductById = async (productId) => {
     try {
@@ -9,4 +9,4 @@ export const getProductById = async (productId) => {
         console.log("Error in getProductById(): " + e);
         return null;
     }
-}
+};
