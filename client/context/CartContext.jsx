@@ -1,26 +1,62 @@
-import { createContext, useEffect, useMemo, useState } from "react";
-import { toast } from "react-toastify";
+import {createContext, useContext, useEffect, useMemo, useState} from "react";
+import {toast} from "react-toastify";
+import AuthContext from "./AuthContext.jsx";
+import axios from "axios";
+import {SERVER_URL} from "../config.js";
 
 const CartContext = createContext();
 
-export const CartProvider = ({ children }) => {
+export const CartProvider = ({children}) => {
     const [cartItems, setCartItems] = useState([]);
-
+    const {user, isAuthenticated} = useContext(AuthContext);
     useEffect(() => {
-        const storedCart = localStorage.getItem("cartItems");
-        if (storedCart) {
-            try {
-                setCartItems(JSON.parse(storedCart));
-            } catch (error) {
-                console.log("Error in effect to load cart items: " + error);
+        const loadCart = async () => {
+            if (isAuthenticated && user?._id) {
+                try {
+                    const response = await axios.get(`${SERVER_URL}/user/cart`, {
+                        headers: {
+                            Authorization: `Bearer ${user?._id}`,
+                        }
+                    })
+                    if (response.status === 200) setCartItems(response.data.cart);
+                } catch (e) {
+                    console.log("Error in load cart cart", e);
+                }
+            } else {
+                const storedCart = localStorage.getItem("cartItems");
+                try {
+                    setCartItems(JSON.parse(storedCart));
+                } catch (e) {
+                    console.log("Error in load cart cart", e);
+                }
             }
         }
-    }, []);
+
+        loadCart()
+    }, [isAuthenticated, user]);
 
     // Effect to update localStorage whenever cart changes
     useEffect(() => {
         localStorage.setItem("cartItems", JSON.stringify(cartItems));
-    }, [cartItems]);
+
+        if (isAuthenticated && user?._id && cartItems.length > 0) {
+            const saveCartToServer = async () => {
+                try {
+                    await axios.post(`${SERVER_URL}/user/cart`, {
+                        cart: cartItems
+                    }, {
+                        headers: {
+                            Authorization: `Bearer ${user?._id}`,
+                        }
+                    })
+                } catch (e) {
+                    console.log("Error in save cart to server", e);
+                    toast.error("Failed to save cart");
+                }
+            }
+            saveCartToServer();
+        }
+    }, [cartItems, isAuthenticated, user?._id]);
 
     // Add product to cart function
     const addProductToCart = (product, quantity = 1) => {
@@ -28,21 +64,27 @@ export const CartProvider = ({ children }) => {
             const existingItem = prevItems.find((item) => item._id === product._id);
             if (existingItem) {
                 toast.info(`Increased ${product.name} quantity in cart by 1`, {
-                    toastId: `increase-${product._id}-${Date.now()}`,
+                    toastId: `increase-${product._id}`,
                 });
-                return prevItems.map((item) => (item._id === product._id ? { ...item, quantity: item.quantity + quantity } : item));
+                return prevItems.map((item) => (item._id === product._id ? {
+                    ...item,
+                    quantity: item.quantity + quantity
+                } : item));
             } else {
                 toast.success(`Added ${product.name} into cart`, {
-                    toastId: `add-${product._id}-${Date.now()}`,
+                    toastId: `add-${product._id}`,
                 });
-                return [...prevItems, { ...product, quantity: quantity }];
+                return [...prevItems, {...product, quantity: quantity}];
             }
         });
     };
 
     // Toggle item quantity
     const toggleQuantity = (productId, type = "increase") => {
-        if (type === "increase") return setCartItems((prevItems) => prevItems.map((item) => (item._id === productId ? { ...item, quantity: item.quantity + 1 } : item)));
+        if (type === "increase") return setCartItems((prevItems) => prevItems.map((item) => (item._id === productId ? {
+            ...item,
+            quantity: item.quantity + 1
+        } : item)));
 
         return setCartItems((prevItems) => {
             const existingItem = prevItems.find((item) => item._id === productId);
@@ -50,19 +92,19 @@ export const CartProvider = ({ children }) => {
             // If current quantity of a product = 1 => remove it from cart
             if (existingItem && existingItem.quantity === 1) {
                 toast.info(`Removed ${existingItem.name} from cart`, {
-                    toastId: `remove-${productId}-${Date.now()}`,
+                    toastId: `remove-${productId}`,
                 });
                 return prevItems.filter((item) => item._id !== productId);
             }
 
             // Decrease quantity
-            return prevItems.map((item) => (item._id === productId ? { ...item, quantity: item.quantity - 1 } : item));
+            return prevItems.map((item) => (item._id === productId ? {...item, quantity: item.quantity - 1} : item));
         });
     };
 
     const clearCart = () => {
         toast.info("Cart cleared", {
-            toastId: Date.now(),
+            toastId: "clear-cart",
         });
         setCartItems([]);
     };
@@ -71,7 +113,14 @@ export const CartProvider = ({ children }) => {
 
     const getTotalPriceInCart = useMemo(() => cartItems.reduce((total, item) => total + item.price * item.quantity, 0), [cartItems]);
 
-    const exportValue = { cartItems, addProductToCart, toggleQuantity, clearCart, getQuantityItemInCart, getTotalPriceInCart };
+    const exportValue = {
+        cartItems,
+        addProductToCart,
+        toggleQuantity,
+        clearCart,
+        getQuantityItemInCart,
+        getTotalPriceInCart
+    };
 
     return <CartContext.Provider value={exportValue}>{children}</CartContext.Provider>;
 };

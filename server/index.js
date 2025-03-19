@@ -3,12 +3,12 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import connectDB from "./config/db.js";
-import { validateOrigin, validateRequest } from "./helpers/checkRequest.js";
-import { createUser, getUserById } from "./repository/UserRepository.js";
-import { hashPassword, verifyPassword } from "./helpers/handlePassword.js";
+import {validateOrigin, validateRequest} from "./helpers/checkRequest.js";
+import {createUser, getCart, getUserById, saveCart} from "./repository/UserRepository.js";
+import {hashPassword, verifyPassword} from "./helpers/handlePassword.js";
 import User from "./models/User.js";
 import Product from "./models/Product.js";
-import { getCommentsByProductId, createComment } from "./repository/CommentRepository.js";
+import {getCommentsByProductId, createComment} from "./repository/CommentRepository.js";
 
 dotenv.config();
 
@@ -24,7 +24,7 @@ app.use(express.json());
 app.use((req, res, next) => {
     console.log(req.headers.origin);
     if (req.headers.origin && validateOrigin(req)) return next();
-    return res.status(400).json({ error: "Your domain is not allowed" });
+    return res.status(400).json({error: "Your domain is not allowed"});
 });
 
 // Route: Authenticate user with email and password
@@ -32,23 +32,23 @@ app.post("/sign-in", async (req, res) => {
     // Validate request data for required fields
     const validationError = validateRequest(req.body);
     console.log(validationError, req.body);
-    if (validationError.length > 0) return res.status(400).json({ validationError });
+    if (validationError.length > 0) return res.status(400).json({validationError});
 
     try {
-        const { email, password } = req.body;
+        const {email, password} = req.body;
         // Find user by email in database
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ error: "User not found!" });
+        const user = await User.findOne({email});
+        if (!user) return res.status(404).json({error: "User not found!"});
 
         // Verify password matches stored hash
         const isMatch = await verifyPassword(email, password);
-        if (!isMatch) return res.status(404).json({ error: "Password isn't correct" });
+        if (!isMatch) return res.status(404).json({error: "Password isn't correct"});
 
         // Return user data on successful authentication
-        return res.status(200).json({ user });
+        return res.status(200).json({user});
     } catch (error) {
         console.log("Error in sign-in route!");
-        return res.status(500).json({ error });
+        return res.status(500).json({error});
     }
 });
 
@@ -62,7 +62,7 @@ app.post("/sign-up", async (req, res) => {
         });
 
     // Create a new user if no error is found
-    const { email, name, password } = req.body;
+    const {email, name, password} = req.body;
     // Hash password before storing in database
     const hashedPassword = await hashPassword(password);
     try {
@@ -72,31 +72,31 @@ app.post("/sign-up", async (req, res) => {
             email,
             password: hashedPassword,
         });
-        return res.status(200).json({ user: newUser });
+        return res.status(200).json({user: newUser});
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({error: error.message});
     }
 });
 
 // Route: Check if an email is already registered
 app.post("/check-email", async (req, res) => {
     try {
-        const { email } = req.body;
+        const {email} = req.body;
         // Ensure email is provided
-        if (!email) return res.status(400).json({ error: "Email is required" });
+        if (!email) return res.status(400).json({error: "Email is required"});
 
         // Check if email exists in database
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({email});
         if (existingUser)
             return res.status(404).json({
                 error: "Email already was used",
             });
 
         // Return success if email is available
-        return res.status(200).json({ message: "OK" });
+        return res.status(200).json({message: "OK"});
     } catch (error) {
         console.log("Error in check-email route: " + error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({error: error.message});
     }
 });
 
@@ -124,11 +124,11 @@ app.get("/", async (req, res) => {
         if (req.query.price && req.query.price !== "all") {
             // Define price range options for filtering
             const priceRanges = {
-                "below $200": { price: { $lt: 200 } },
-                "from $200 to $400": { price: { $gte: 200, $lte: 400 } },
-                "from $400 to $800": { price: { $gte: 400, $lte: 800 } },
-                "from $800 to $2000": { price: { $gte: 800, $lte: 2000 } },
-                "above $2000": { price: { $gt: 2000 } },
+                "below $200": {price: {$lt: 200}},
+                "from $200 to $400": {price: {$gte: 200, $lte: 400}},
+                "from $400 to $800": {price: {$gte: 400, $lte: 800}},
+                "from $800 to $2000": {price: {$gte: 800, $lte: 2000}},
+                "above $2000": {price: {$gt: 2000}},
             };
             // Handle single or multiple price range selections
             const prices = Array.isArray(req.query.price) ? req.query.price : [req.query.price];
@@ -153,7 +153,7 @@ app.get("/", async (req, res) => {
         });
     } catch (error) {
         console.log("Error in / route: " + error);
-        return res.status(500).json({ error: "Failed to fetch products!" });
+        return res.status(500).json({error: "Failed to fetch products!"});
     }
 });
 
@@ -162,29 +162,29 @@ app.get("/get-category", async (req, res) => {
     try {
         // Query database for distinct categories
         const categoryList = await Product.distinct("category");
-        return res.status(200).json({ categoryList });
+        return res.status(200).json({categoryList});
     } catch (error) {
         console.log("Error in get-category route: " + error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({error: error.message});
     }
 });
 
 app.get("/product/:productId", async (req, res) => {
     try {
         const productId = req.params.productId;
-        const product = await Product.findOne({ _id: productId });
-        if (!product) return res.status(404).json({ error: "Product not found" });
-        return res.status(200).json({ data: product });
+        const product = await Product.findOne({_id: productId});
+        if (!product) return res.status(404).json({error: "Product not found"});
+        return res.status(200).json({data: product});
     } catch (error) {
         console.log("Error in get specific product route: " + error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({error: error.message});
     }
 });
 
 // Route: Get comments for a specific product
 app.get("/product/:productId/comments", async (req, res) => {
     try {
-        const { productId } = req.params;
+        const {productId} = req.params;
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 5;
 
@@ -214,15 +214,15 @@ app.get("/product/:productId/comments", async (req, res) => {
         });
     } catch (error) {
         console.log("Error in get product comments route:", error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({error: error.message});
     }
 });
 
 // Route: Add a comment to a product
 app.post("/product/:productId/comments", async (req, res) => {
     try {
-        const { productId } = req.params;
-        const { userId, content, rating } = req.body;
+        const {productId} = req.params;
+        const {userId, content, rating} = req.body;
 
         // Validate request
         if (!userId || !content || !rating) {
@@ -254,7 +254,34 @@ app.post("/product/:productId/comments", async (req, res) => {
         });
     } catch (error) {
         console.log("Error in post product comment route:", error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({error: error.message});
+    }
+});
+
+// Get a cart for a specific user
+app.get('/user/cart', async (req, res) => {
+    try {
+        const userId = req.headers.authorization.split(' ')[1];
+        if (!userId) return res.status(401).json({error: "Authentication failed!"})
+        const cart = await getCart(userId);
+        return res.status(200).json({cart});
+    } catch (e) {
+        console.log("Error in get cart" + e);
+        return res.status(500).json({error: e})
+    }
+})
+
+// Route: Save cart into db for a specific user
+app.post("/user/cart", async (req,res) => {
+    try {
+        const userId = req.headers.authorization.split(' ')[1];
+        if (!userId) return res.status(401).json({error: "Authentication failed!"});
+        const newCartItems = req.body.cart;
+        await saveCart(userId, newCartItems);
+        return res.status(200).json({message: "Successfully added to cart!"});
+    } catch (e) {
+        console.log("Error in save product cart", e);
+        return res.status(500).json({error: e});
     }
 });
 

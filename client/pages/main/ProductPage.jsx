@@ -27,7 +27,9 @@ const ProductPage = () => {
         if (quantity < productInfo.stock) setQuantity(quantity + 1);
     };
 
-    const handleAddToCart = () => addProductToCart(productInfo, quantity);
+    const handleAddToCart = () => {
+        if (productInfo && productInfo._id) addProductToCart(productInfo, quantity);
+    };
     const navigateToCartPage = () => navigate("/cart");
 
     // If product data is loading or not found

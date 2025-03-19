@@ -1,27 +1,30 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import SubmitButton from "../../components/buttons/SubmitButton";
 import TextField from "../../components/authentication/TextField";
 import PasswordField from "../../components/authentication/PasswordField";
-import { ToastContainer, toast } from "react-toastify";
-import { SERVER_URL } from "../../config";
+import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import LeftContainer from "../../components/layouts/authentication/LeftContainer";
 import RightContainer from "../../components/layouts/authentication/RightContainer";
-import { handleSubmit, validateInput } from "../../helper_functions/authentication";
+import { validateInput } from "../../helper_functions/authentication";
+import AuthContext from "../../context/AuthContext.jsx";
 
 const SignInPage = () => {
     const [emailInputValue, setEmailInputValue] = useState("");
     const [passwordInputValue, setPasswordInputValue] = useState("");
     const navigate = useNavigate();
+    const { signIn, isAuthenticated } = useContext(AuthContext);
+
+    if (isAuthenticated) navigate("/");
 
     const handleSignIn = async () => {
         if (!validateInput(emailInputValue, passwordInputValue)) return;
-        await handleSubmit(SERVER_URL + "/sign-in", {
-            emailInputValue: emailInputValue,
-            passwordInputValue: passwordInputValue,
-            messageWhenSuccess: "Sign in successfully",
-            redirectWhenSuccess: () => navigate("/"),
-        });
+        const response = await signIn(emailInputValue, passwordInputValue);
+        if (response) {
+            toast.success("Sign in successfully!");
+            return navigate("/");
+        }
+        toast.error("Sign in failed");
     };
 
     return (
@@ -32,7 +35,6 @@ const SignInPage = () => {
                 <SubmitButton content={"Next"} onClick={handleSignIn} />
             </LeftContainer>
             <RightContainer imgPath={"/icons/introduce-image.jpg"} />
-            <ToastContainer />
         </div>
     );
 };

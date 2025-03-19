@@ -1,13 +1,25 @@
 import { useContext, useState } from "react";
-import { FiSearch, FiShoppingCart, FiChevronDown, FiUser } from "react-icons/fi";
+import { FiSearch, FiShoppingCart, FiChevronDown, FiUser, FiLogOut, FiLogIn } from "react-icons/fi";
 import CartContext from "../../context/CartContext";
 import { Link } from "react-router-dom";
+import AuthContext from "../../context/AuthContext.jsx";
+import { toast } from "react-toastify";
 
 const NavigationBar = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const { getQuantityItemInCart } = useContext(CartContext);
+    const { isAuthenticated, signOut, user } = useContext(AuthContext);
     const cartCount = getQuantityItemInCart || 0;
+
+    const handleLogout = async (e) => {
+        e.preventDefault();
+        signOut();
+        setIsProfileOpen(false);
+        setTimeout(() => {
+            toast.info("Logout successfully");
+        }, 500);
+    };
 
     // Sample categories - replace with your actual categories
     const categories = ["Electronics", "Clothing", "Home & Kitchen", "Beauty", "Books"];
@@ -68,19 +80,44 @@ const NavigationBar = () => {
 
                             {isProfileOpen && (
                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                                    <a href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                        My Profile
-                                    </a>
-                                    <a href="/orders" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                        My Orders
-                                    </a>
-                                    <a href="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                        Settings
-                                    </a>
-                                    <div className="border-t border-gray-100"></div>
-                                    <a href="/logout" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                        Logout
-                                    </a>
+                                    {isAuthenticated ? (
+                                        <>
+                                            <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
+                                                <p className="font-semibold">{user.email}</p>
+                                            </div>
+                                            <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                My Profile
+                                            </Link>
+                                            <Link to="/orders" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                My Orders
+                                            </Link>
+                                            <Link to="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                Settings
+                                            </Link>
+                                            <div className="border-t border-gray-100"></div>
+                                            <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                <div className="flex items-center">
+                                                    <FiLogOut className="mr-2" />
+                                                    Logout
+                                                </div>
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Link to="/sign-in" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                <div className="flex items-center">
+                                                    <FiLogIn className="mr-2" />
+                                                    Sign In
+                                                </div>
+                                            </Link>
+                                            <Link to="/sign-up" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                <div className="flex items-center">
+                                                    <FiLogIn className="mr-2" />
+                                                    Sign Up
+                                                </div>
+                                            </Link>
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>

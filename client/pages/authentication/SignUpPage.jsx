@@ -3,12 +3,13 @@ import LeftContainer from "../../components/layouts/authentication/LeftContainer
 import RightContainer from "../../components/layouts/authentication/RightContainer";
 import TextField from "../../components/authentication/TextField";
 import PasswordField from "../../components/authentication/PasswordField";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import SubmitButton from "../../components/buttons/SubmitButton";
-import { handleSubmit, validateInput } from "../../helper_functions/authentication";
+import { validateInput } from "../../helper_functions/authentication";
 import { SERVER_URL } from "../../config";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import AuthContext from "../../context/AuthContext.jsx";
 
 const SignUpPage = () => {
     const [emailInputValue, setEmailInputValue] = useState("");
@@ -17,6 +18,9 @@ const SignUpPage = () => {
     const [isFocusInEmail, setIsFocusInEmail] = useState(false);
     const [isValidEmail, setIsValidEmail] = useState(false);
     const navigate = useNavigate();
+    const { isAuthenticated, signUp } = useContext(AuthContext);
+
+    if (isAuthenticated) navigate("/");
 
     const handleFocusInEmail = () => setIsFocusInEmail(true);
     const handleBlurInEmail = () => setIsFocusInEmail(false);
@@ -46,12 +50,12 @@ const SignUpPage = () => {
             return;
         }
         if (!validateInput(emailInputValue, passwordInputValue, confirmPasswordInputValue)) return;
-        await handleSubmit(SERVER_URL + "/sign-up", {
-            emailInputValue: emailInputValue,
-            passwordInputValue: passwordInputValue,
-            messageWhenSuccess: "Sign up successfully",
-            redirectWhenSuccess: () => navigate("/sign-in"),
-        });
+        const response = await signUp(emailInputValue, passwordInputValue);
+        if (response) {
+            toast.success("Sign in successfully!");
+            return navigate("/");
+        }
+        toast.error("Sign in failed");
     };
 
     return (
