@@ -1,14 +1,14 @@
-import {createContext, useContext, useEffect, useMemo, useState} from "react";
-import {toast} from "react-toastify";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
 import AuthContext from "./AuthContext.jsx";
 import axios from "axios";
-import {SERVER_URL} from "../config.js";
+import { SERVER_URL } from "../config.js";
 
 const CartContext = createContext();
 
-export const CartProvider = ({children}) => {
+export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState([]);
-    const {user, isAuthenticated} = useContext(AuthContext);
+    const { user, isAuthenticated } = useContext(AuthContext);
     useEffect(() => {
         const loadCart = async () => {
             if (isAuthenticated && user?._id) {
@@ -16,8 +16,8 @@ export const CartProvider = ({children}) => {
                     const response = await axios.get(`${SERVER_URL}/user/cart`, {
                         headers: {
                             Authorization: `Bearer ${user?._id}`,
-                        }
-                    })
+                        },
+                    });
                     if (response.status === 200) setCartItems(response.data.cart);
                 } catch (e) {
                     console.log("Error in load cart cart", e);
@@ -30,9 +30,9 @@ export const CartProvider = ({children}) => {
                     console.log("Error in load cart cart", e);
                 }
             }
-        }
+        };
 
-        loadCart()
+        loadCart();
     }, [isAuthenticated, user]);
 
     // Effect to update localStorage whenever cart changes
@@ -42,18 +42,22 @@ export const CartProvider = ({children}) => {
         if (isAuthenticated && user?._id && cartItems.length > 0) {
             const saveCartToServer = async () => {
                 try {
-                    await axios.post(`${SERVER_URL}/user/cart`, {
-                        cart: cartItems
-                    }, {
-                        headers: {
-                            Authorization: `Bearer ${user?._id}`,
+                    await axios.post(
+                        `${SERVER_URL}/user/cart`,
+                        {
+                            cart: cartItems,
+                        },
+                        {
+                            headers: {
+                                Authorization: `Bearer ${user?._id}`,
+                            },
                         }
-                    })
+                    );
                 } catch (e) {
                     console.log("Error in save cart to server", e);
                     toast.error("Failed to save cart");
                 }
-            }
+            };
             saveCartToServer();
         }
     }, [cartItems, isAuthenticated, user?._id]);
@@ -66,25 +70,36 @@ export const CartProvider = ({children}) => {
                 toast.info(`Increased ${product.name} quantity in cart by 1`, {
                     toastId: `increase-${product._id}`,
                 });
-                return prevItems.map((item) => (item._id === product._id ? {
-                    ...item,
-                    quantity: item.quantity + quantity
-                } : item));
+                return prevItems.map((item) =>
+                    item._id === product._id
+                        ? {
+                              ...item,
+                              quantity: item.quantity + quantity,
+                          }
+                        : item
+                );
             } else {
                 toast.success(`Added ${product.name} into cart`, {
                     toastId: `add-${product._id}`,
                 });
-                return [...prevItems, {...product, quantity: quantity}];
+                return [...prevItems, { ...product, quantity: quantity }];
             }
         });
     };
 
     // Toggle item quantity
     const toggleQuantity = (productId, type = "increase") => {
-        if (type === "increase") return setCartItems((prevItems) => prevItems.map((item) => (item._id === productId ? {
-            ...item,
-            quantity: item.quantity + 1
-        } : item)));
+        if (type === "increase")
+            return setCartItems((prevItems) =>
+                prevItems.map((item) =>
+                    item._id === productId
+                        ? {
+                              ...item,
+                              quantity: item.quantity + 1,
+                          }
+                        : item
+                )
+            );
 
         return setCartItems((prevItems) => {
             const existingItem = prevItems.find((item) => item._id === productId);
@@ -98,7 +113,7 @@ export const CartProvider = ({children}) => {
             }
 
             // Decrease quantity
-            return prevItems.map((item) => (item._id === productId ? {...item, quantity: item.quantity - 1} : item));
+            return prevItems.map((item) => (item._id === productId ? { ...item, quantity: item.quantity - 1 } : item));
         });
     };
 
@@ -109,9 +124,9 @@ export const CartProvider = ({children}) => {
         setCartItems([]);
     };
 
-    const getQuantityItemInCart = useMemo(() => cartItems.reduce((total, item) => total + item.quantity, 0), [cartItems]);
+    const getQuantityItemInCart = useMemo(() => cartItems?.reduce((total, item) => total + item.quantity, 0), [cartItems]);
 
-    const getTotalPriceInCart = useMemo(() => cartItems.reduce((total, item) => total + item.price * item.quantity, 0), [cartItems]);
+    const getTotalPriceInCart = useMemo(() => cartItems?.reduce((total, item) => total + item.price * item.quantity, 0), [cartItems]);
 
     const exportValue = {
         cartItems,
@@ -119,7 +134,7 @@ export const CartProvider = ({children}) => {
         toggleQuantity,
         clearCart,
         getQuantityItemInCart,
-        getTotalPriceInCart
+        getTotalPriceInCart,
     };
 
     return <CartContext.Provider value={exportValue}>{children}</CartContext.Provider>;

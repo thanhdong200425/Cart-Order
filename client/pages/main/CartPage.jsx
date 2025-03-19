@@ -26,7 +26,7 @@ const CartPage = () => {
                         <Tab label="Delivery in place">
                             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-8 p-6">
                                 <div className="lg:col-span-2">
-                                    <CartList items={cartItems} onIncreaseQuantity={handleIncreaseQuantity} onDecreaseQuantity={handleDecreaseQuantity} />{" "}
+                                    <CartList items={cartItems || []} onIncreaseQuantity={handleIncreaseQuantity} onDecreaseQuantity={handleDecreaseQuantity} />{" "}
                                 </div>
                                 <div className="lg:col-span-1">
                                     <div className="sticky top-24">{cartItems.length > 0 && <CheckoutContainer />}</div>
