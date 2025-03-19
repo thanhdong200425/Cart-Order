@@ -18,16 +18,22 @@ export const CartProvider = ({ children }) => {
                             Authorization: `Bearer ${user?._id}`,
                         },
                     });
-                    if (response.status === 200) setCartItems(response.data.cart);
+                    if (response.status === 200) {
+                        const cartData = response.data.cart || [];
+                        if (cartData?.length === 0) setCartItems(JSON.parse(localStorage.getItem("cartItems")));
+                        else setCartItems(Array.isArray(cartData) ? cartData : []);
+                    }
                 } catch (e) {
                     console.log("Error in load cart cart", e);
+                    setCartItems([]);
                 }
             } else {
                 const storedCart = localStorage.getItem("cartItems");
                 try {
-                    setCartItems(JSON.parse(storedCart));
+                    setCartItems(storedCart ? JSON.parse(storedCart) : []);
                 } catch (e) {
                     console.log("Error in load cart cart", e);
+                    setCartItems([]);
                 }
             }
         };
@@ -39,7 +45,7 @@ export const CartProvider = ({ children }) => {
     useEffect(() => {
         localStorage.setItem("cartItems", JSON.stringify(cartItems));
 
-        if (isAuthenticated && user?._id && cartItems.length > 0) {
+        if (isAuthenticated && user?._id && cartItems?.length > 0) {
             const saveCartToServer = async () => {
                 try {
                     await axios.post(
@@ -64,8 +70,12 @@ export const CartProvider = ({ children }) => {
 
     // Add product to cart function
     const addProductToCart = (product, quantity = 1) => {
+        if (cartItems?.length === 0) {
+            setCartItems([{ ...product, quantity: quantity }]);
+            return;
+        }
         setCartItems((prevItems) => {
-            const existingItem = prevItems.find((item) => item._id === product._id);
+            const existingItem = prevItems?.find((item) => item._id === product._id);
             if (existingItem) {
                 toast.info(`Increased ${product.name} quantity in cart by 1`, {
                     toastId: `increase-${product._id}`,
@@ -124,9 +134,15 @@ export const CartProvider = ({ children }) => {
         setCartItems([]);
     };
 
-    const getQuantityItemInCart = useMemo(() => cartItems?.reduce((total, item) => total + item.quantity, 0), [cartItems]);
+    const getQuantityItemInCart = useMemo(() => {
+        if (!Array.isArray(cartItems) || cartItems.length === 0) return 0;
+        return cartItems.reduce((total, item) => total + (item?.quantity || 0), 0);
+    }, [cartItems]);
 
-    const getTotalPriceInCart = useMemo(() => cartItems?.reduce((total, item) => total + item.price * item.quantity, 0), [cartItems]);
+    const getTotalPriceInCart = useMemo(() => {
+        if (!Array.isArray(cartItems) || cartItems.length === 0) return 0;
+        return cartItems.reduce((total, item) => total + (item?.price || 0) * (item?.quantity || 0), 0);
+    }, [cartItems]);
 
     const exportValue = {
         cartItems,

@@ -52,6 +52,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setIsAuthenticated(false);
         localStorage.removeItem("userData");
+        localStorage.removeItem("cartItems", []);
     };
 
     const exportValue = { user, isAuthenticated, signIn, signUp, signOut, isLoading };
